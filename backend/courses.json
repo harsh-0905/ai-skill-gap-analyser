@@ -1,0 +1,17 @@
+{
+  "python": "https://roadmap.sh/python",
+  "java": "https://roadmap.sh/java",
+  "react": "https://roadmap.sh/react",
+  "node": "https://roadmap.sh/nodejs",
+  "docker": "https://roadmap.sh/docker",
+  "kubernetes": "https://roadmap.sh/kubernetes",
+  "aws": "https://roadmap.sh/aws",
+  "machine learning": "https://roadmap.sh/ai-data-scientist",
+  "nlp": "https://www.coursera.org/learn/language-processing",
+  "sql": "https://roadmap.sh/sql",
+  "git": "https://roadmap.sh/git-github",
+  "css": "https://roadmap.sh/frontend",
+  "javascript": "https://roadmap.sh/javascript",
+  "ci/cd": "https://roadmap.sh/devops",
+  "azure": "https://learn.microsoft.com/en-us/training/azure/"
+}

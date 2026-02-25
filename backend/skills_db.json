@@ -1,0 +1,5 @@
+{
+  "frontend developer": ["html", "css", "javascript", "react"],
+  "backend developer": ["python", "java", "node", "sql", "api"],
+  "data scientist": ["python", "machine learning", "pandas", "numpy", "nlp"]
+}
