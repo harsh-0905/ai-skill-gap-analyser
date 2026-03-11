@@ -1,10 +1,26 @@
 import PyPDF2
+from io import BytesIO
+
 def extract_text_from_pdf(file):
-    reader = PyPDF2.PdfReader(file)
-    text = ""
+    try:
+        # Read uploaded file bytes
+        file_bytes = file.read()
 
-    for page in reader.pages:
-        if page.extract_text():
-            text += page.extract_text()
+        # Convert to BytesIO stream
+        pdf_stream = BytesIO(file_bytes)
 
-    return text.lower()
+        # Read PDF
+        reader = PyPDF2.PdfReader(pdf_stream)
+
+        text = ""
+
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text
+
+        return text.lower()
+
+    except Exception as e:
+        print("PDF parsing error:", e)
+        return ""

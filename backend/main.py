@@ -1,7 +1,9 @@
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+import os
 import json
-from youtube_service import get_youtube_video
-from cert_service import get_certificate
+from  youtube_service import get_youtube_video
+from  cert_service import get_certificate
 from learning_time_service import get_learning_time
    
 
@@ -11,16 +13,28 @@ from analyser import analyse_gap
 
 app = FastAPI()
 
-# load master skills
-with open("all_skills.json") as f:
-    ALL_SKILLS = json.load(f)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-with open("courses.json") as f:
-        COURSE_DB = json.load(f)    
+# load master
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(BASE_DIR, "all_skills.json")) as f:
+        ALL_SKILLS = json.load(f)
+
+
+
+with open(os.path.join(BASE_DIR, "courses.json")) as f:
+            COURSE_DB = json.load(f)    
 
 
 @app.post("/analyze")
-async def analyze_resume(resume: UploadFile, jd: UploadFile):
+async def analyze_resume(resume: UploadFile = File(...), jd: UploadFile = File(...)):
 
     resume_text = extract_text_from_pdf(resume.file)
     jd_text = extract_text_from_pdf(jd.file)
@@ -46,6 +60,7 @@ async def analyze_resume(resume: UploadFile, jd: UploadFile):
         }
 
     result["recommendations"] = recommendations
+    result["skills"] = result["matched_skills"]  # alias for frontend
 
     # DOMAIN DETECTION
     domain = "General"
