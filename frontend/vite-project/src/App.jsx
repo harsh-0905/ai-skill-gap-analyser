@@ -1,7 +1,9 @@
-import Dashboard from "./pages/Dashboard";
+import SkillGapAnalyzer from "./SkillGapAnalyzer";
 
-function App() {
-  return <Dashboard />;
+/**
+ * App
+ * Vite entry point — simply mounts the SkillGapAnalyzer shell.
+ */
+export default function App() {
+  return <SkillGapAnalyzer />;
 }
-
-export default App;
