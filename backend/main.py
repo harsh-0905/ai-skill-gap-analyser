@@ -20,9 +20,11 @@ from analyser import analyse_gap
 
 app = FastAPI()
 
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -286,7 +288,7 @@ def _build_email_html(name: str, role: str, analysis: dict) -> str:
 
     <!-- Footer -->
     <div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 32px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;">Sent by SkillGap AI · <a href="http://localhost:5173" style="color:#6366f1;text-decoration:none;">Open Dashboard</a></p>
+      <p style="margin:0;font-size:12px;color:#9ca3af;">Sent by SkillGap AI · <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}" style="color:#6366f1;text-decoration:none;">Open Dashboard</a></p>
     </div>
 
   </div>
