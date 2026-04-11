@@ -7,6 +7,7 @@ import StatCard          from "../components/StatCard";
 import Skeleton          from "../components/Skeleton";
 import { SkillsRadarChart, SkillsBarChart, ProgressAreaChart } from "../components/Charts";
 
+// ── Time-aware greeting ───────────────────────────────────────────────────────
 function getGreeting(hour) {
   if (hour >= 5  && hour < 12) return { text: "Good morning",   emoji: "☀️",  msg: "Start your day with a quick skill check!" };
   if (hour >= 12 && hour < 14) return { text: "Good afternoon", emoji: "🌤️", msg: "Fuel up and keep pushing toward your goals." };
@@ -55,8 +56,8 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
       className="relative min-h-full"
       style={{ background: "var(--bg-base)" }}
     >
-      {/* Ambient glows — hidden on mobile for perf */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden hidden sm:block">
+      {/* ── Ambient background glows ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full opacity-20"
           style={{ background: "radial-gradient(circle, #4f8ef7, transparent 65%)", filter: "blur(80px)" }} />
         <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full opacity-15"
@@ -65,21 +66,21 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           style={{ background: "radial-gradient(circle, #6366f1, transparent 65%)", filter: "blur(80px)" }} />
       </div>
 
-      <div className="relative z-10 p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-3 sm:space-y-6">
+      <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
         {/* ── Hero Banner ── */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="relative rounded-2xl sm:rounded-3xl overflow-hidden"
+          className="relative rounded-3xl overflow-hidden"
           style={{
             background: "linear-gradient(135deg, rgba(79,142,247,0.15) 0%, rgba(99,102,241,0.12) 40%, rgba(168,85,247,0.1) 100%)",
             border: "1px solid rgba(255,255,255,0.1)",
           }}
         >
           {/* Grid pattern */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.07] hidden sm:block"
+          <div className="absolute inset-0 pointer-events-none opacity-[0.07]"
             style={{
               backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
               backgroundSize: "40px 40px",
@@ -89,37 +90,31 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           <div className="absolute top-0 left-0 right-0 h-px"
             style={{ background: "linear-gradient(90deg, transparent, rgba(79,142,247,0.5), rgba(168,85,247,0.5), transparent)" }} />
 
-          {/* Main content — row on mobile (text left, ring right), column on lg */}
-          <div className="relative p-4 sm:p-8 flex flex-row lg:flex-row items-start lg:items-center gap-3 sm:gap-8">
-
+          <div className="relative p-8 flex flex-col lg:flex-row items-start lg:items-center gap-8">
             {/* Left — text */}
             <div className="flex-1 min-w-0">
-              {/* Badge + date */}
-              <div className="flex items-center gap-2 mb-2 sm:mb-3 flex-wrap">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold"
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                   style={{ background: "rgba(79,142,247,0.15)", border: "1px solid rgba(79,142,247,0.25)", color: "#93c5fd" }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                   Live Dashboard
                 </div>
-                <span className="text-[10px] sm:text-xs hidden sm:inline" style={{ color: "var(--text-muted)" }}>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                   {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
                 </span>
               </div>
 
-              {/* Greeting */}
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-1" style={{ letterSpacing: "-0.02em" }}>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-1" style={{ letterSpacing: "-0.02em" }}>
                 <span style={{ color: "var(--text-primary)" }}>{greetingText} </span>
                 <span>{emoji}</span>
               </h1>
 
-              {/* Sub greeting — hidden on mobile */}
-              <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 hidden sm:block" style={{ color: "rgba(200,200,220,0.45)" }}>
+              <p className="text-sm font-medium mb-3" style={{ color: "rgba(200,200,220,0.45)" }}>
                 {greetingMsg}
               </p>
 
-              {/* Summary line */}
-              <p className="text-xs sm:text-sm mb-3 sm:mb-5 leading-relaxed" style={{ color: "rgba(200,200,220,0.55)" }}>
-                Profile is{" "}
+              <p className="text-sm mb-5 max-w-lg leading-relaxed" style={{ color: "rgba(200,200,220,0.55)" }}>
+                Your profile is{" "}
                 <span className="font-semibold" style={{
                   background: "linear-gradient(135deg, #4f8ef7, #a855f7)",
                   WebkitBackgroundClip: "text",
@@ -127,24 +122,20 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
                 }}>
                   {matchPct}% aligned
                 </span>{" "}
-                with your target role.{" "}
-                <span className="hidden sm:inline">Close{" "}
-                  <span style={{ color: "#fda4af", fontWeight: 600 }}>{missing} skill{missing !== 1 ? "s" : ""}</span>{" "}
-                  to reach full job readiness.
-                </span>
-                <span className="sm:hidden" style={{ color: "#fda4af", fontWeight: 600 }}> {missing} missing.</span>
+                with your target role. Close{" "}
+                <span style={{ color: "#fda4af", fontWeight: 600 }}>{missing} skill{missing !== 1 ? "s" : ""}</span>{" "}
+                to reach full job readiness.
               </p>
 
-              {/* Buttons — stacked on mobile, row on sm+ */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="flex flex-wrap gap-3">
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => onNavigate("analyze")}
-                  className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white w-full sm:w-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
                   style={{ background: "linear-gradient(135deg, #4f8ef7, #6366f1)", boxShadow: "0 8px 24px rgba(79,142,247,0.3)" }}
                 >
-                  <RefreshCw size={13} />
+                  <RefreshCw size={14} />
                   Run New Analysis
                 </motion.button>
 
@@ -152,43 +143,26 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => onNavigate("learning")}
-                  className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold w-full sm:w-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
                   style={{
                     background: "rgba(255,255,255,0.07)",
                     border: "1px solid rgba(255,255,255,0.14)",
                     color: "rgba(220,220,240,0.8)",
                   }}
                 >
-                  <Route size={13} />
+                  <Route size={14} />
                   View Learning Path
-                  <ArrowRight size={12} />
+                  <ArrowRight size={13} />
                 </motion.button>
               </div>
             </div>
 
-            {/* Right — score ring, smaller on mobile */}
+            {/* Right — score ring */}
             <div className="relative flex items-center justify-center shrink-0">
               <div className="absolute inset-0 rounded-full pointer-events-none"
                 style={{ background: "radial-gradient(circle, rgba(79,142,247,0.2) 0%, transparent 70%)", filter: "blur(24px)" }} />
-
-              {/* Mobile ring */}
-              <div className="relative flex sm:hidden w-20 h-20 items-center justify-center">
-                <CircularProgress value={matchPct} size={80} stroke={7} id="hero-sm" />
-                <div className="absolute text-center">
-                  <p className="text-base font-bold tabular-nums" style={{
-                    background: "linear-gradient(135deg, #4f8ef7, #a855f7)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}>
-                    {matchPct}%
-                  </p>
-                  <p className="text-[9px] font-medium" style={{ color: "var(--text-muted)" }}>Match</p>
-                </div>
-              </div>
-
-              {/* Desktop ring */}
-              <div className="relative hidden sm:flex w-40 h-40 items-center justify-center">
-                <CircularProgress value={matchPct} size={160} stroke={12} id="hero-lg" />
+              <div className="relative w-40 h-40 flex items-center justify-center">
+                <CircularProgress value={matchPct} size={160} stroke={12} id="hero" />
                 <div className="absolute text-center">
                   <p className="text-4xl font-bold tabular-nums" style={{
                     background: "linear-gradient(135deg, #4f8ef7, #a855f7)",
@@ -207,7 +181,7 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           </div>
 
           {/* Ticker bar */}
-          <div className="relative px-4 sm:px-8 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3"
+          <div className="relative px-8 py-3 flex items-center gap-3"
             style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.2)" }}>
             <div className="flex items-center gap-1.5 shrink-0">
               <Zap size={11} style={{ color: "#fbbf24" }} />
@@ -220,7 +194,7 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.3 }}
-                className="text-[11px] truncate"
+                className="text-[11px]"
                 style={{ color: "rgba(200,200,220,0.5)" }}
               >
                 {TIPS[tipIndex]}
@@ -229,8 +203,8 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           </div>
         </motion.div>
 
-        {/* ── KPI cards — 2x2 on mobile, 4-col on lg ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        {/* ── KPI cards ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={TrendingUp}
             label="Job Readiness"
@@ -271,13 +245,13 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="rounded-2xl p-4 sm:p-6"
+            className="rounded-2xl p-6"
             style={{
               background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Skill Snapshot</h3>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>From your last analysis</p>
@@ -291,19 +265,19 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
               </button>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#6ee7b7" }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#6ee7b7" }}>
                   ✓ Matched Skills
                 </p>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap gap-2">
                   {analysis.matched_skills?.map((s, i) => (
                     <motion.span
                       key={s}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.35 + i * 0.04 }}
-                      className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold"
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(16,185,129,0.1)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.2)" }}
                     >
                       {s}
@@ -315,17 +289,17 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
               <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
 
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#fda4af" }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#fda4af" }}>
                   ✕ Missing Skills
                 </p>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap gap-2">
                   {analysis.missing_skills?.map((s, i) => (
                     <motion.span
                       key={s}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.5 + i * 0.04 }}
-                      className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold"
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(244,63,94,0.1)", color: "#fda4af", border: "1px solid rgba(244,63,94,0.2)" }}
                     >
                       {s}
@@ -337,8 +311,8 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           </motion.div>
         )}
 
-        {/* ── Charts — hidden on mobile, visible on sm+ ── */}
-        <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* ── Charts ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}>
             <SkillsRadarChart />
           </motion.div>
@@ -347,12 +321,12 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           </motion.div>
         </div>
 
-        {/* ── Progress chart — hidden on mobile ── */}
+        {/* ── Progress chart ── */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="hidden sm:block rounded-2xl p-6"
+          className="rounded-2xl p-6"
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
         >
           <div className="flex items-center justify-between mb-6">
@@ -372,60 +346,35 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
           <ProgressAreaChart gradientId="dashGrad" height={200} />
         </motion.div>
 
-        {/* ── Quick action cards — icon+label on mobile, full card on sm+ ── */}
+        {/* ── Quick action cards ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.58 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
         >
-          {/* Mobile: compact 3-col icon strip */}
-          <div className="grid grid-cols-3 gap-2 sm:hidden">
-            {[
-              { label: "Analyze",  icon: RefreshCw,  page: "analyze",  color: "#4f8ef7" },
-              { label: "Reports",  icon: TrendingUp, page: "reports",  color: "#a855f7" },
-              { label: "Learning", icon: Route,      page: "learning", color: "#10b981" },
-            ].map(({ label, icon: Icon, page, color }) => (
-              <motion.button
-                key={label}
-                onClick={() => onNavigate(page)}
-                whileTap={{ scale: 0.96 }}
-                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `${color}18`, border: `1px solid ${color}28` }}>
-                  <Icon size={15} style={{ color }} />
-                </div>
-                <span className="text-[11px] font-semibold" style={{ color: "rgba(220,220,240,0.7)" }}>{label}</span>
-              </motion.button>
-            ))}
-          </div>
-
-          {/* Desktop: full cards */}
-          <div className="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: "Analyze Resume",  sub: "Upload & get instant insights",  icon: RefreshCw,  page: "analyze",  color: "#4f8ef7" },
-              { label: "View Reports",    sub: "Detailed skill gap breakdown",    icon: TrendingUp, page: "reports",  color: "#a855f7" },
-              { label: "Start Learning",  sub: "Follow your 8-week roadmap",      icon: Route,      page: "learning", color: "#10b981" },
-            ].map(({ label, sub, icon: Icon, page, color }) => (
-              <motion.button
-                key={label}
-                onClick={() => onNavigate(page)}
-                whileHover={{ y: -3, boxShadow: `0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px ${color}22` }}
-                whileTap={{ scale: 0.98 }}
-                className="p-5 rounded-2xl text-left group transition-all"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-              >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `${color}18`, border: `1px solid ${color}28` }}>
-                  <Icon size={16} style={{ color }} />
-                </div>
-                <p className="text-sm font-semibold mb-0.5 group-hover:text-white transition-colors"
-                  style={{ color: "rgba(220,220,240,0.8)" }}>{label}</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{sub}</p>
-              </motion.button>
-            ))}
-          </div>
+          {[
+            { label: "Analyze Resume",    sub: "Upload & get instant insights",  icon: RefreshCw, page: "analyze",  color: "#4f8ef7" },
+            { label: "View Reports",      sub: "Detailed skill gap breakdown",    icon: TrendingUp, page: "reports", color: "#a855f7" },
+            { label: "Start Learning",    sub: "Follow your 8-week roadmap",      icon: Route,     page: "learning", color: "#10b981" },
+          ].map(({ label, sub, icon: Icon, page, color }) => (
+            <motion.button
+              key={label}
+              onClick={() => onNavigate(page)}
+              whileHover={{ y: -3, boxShadow: `0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px ${color}22` }}
+              whileTap={{ scale: 0.98 }}
+              className="p-5 rounded-2xl text-left group transition-all"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: `${color}18`, border: `1px solid ${color}28` }}>
+                <Icon size={16} style={{ color }} />
+              </div>
+              <p className="text-sm font-semibold mb-0.5 group-hover:text-white transition-colors"
+                style={{ color: "rgba(220,220,240,0.8)" }}>{label}</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{sub}</p>
+            </motion.button>
+          ))}
         </motion.div>
 
       </div>
@@ -435,16 +384,16 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="p-3 sm:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-      <Skeleton className="h-40 sm:h-52 w-full" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 sm:h-28" />)}
+    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+      <Skeleton className="h-52 w-full" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
       </div>
-      <Skeleton className="h-36 sm:h-40 w-full" />
-      <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <Skeleton className="h-40 w-full" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
       </div>
-      <Skeleton className="hidden sm:block h-56 w-full" />
+      <Skeleton className="h-56 w-full" />
     </div>
   );
 }
