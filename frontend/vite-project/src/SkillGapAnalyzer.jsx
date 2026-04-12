@@ -13,8 +13,7 @@ import LearningPath from "./pages/LearningPath";
 import Profile      from "./pages/Profile";
 import Settings     from "./pages/Settings";
 
-import { useToast }       from "./hooks/useToast";
-import { DUMMY_ANALYSIS } from "./data/constants";
+import { useToast } from "./hooks/useToast";
 
 // Breakpoint: anything under 1024px = mobile/tablet (sidebar overlays)
 const DESKTOP_BP = 1024;
@@ -34,7 +33,7 @@ export default function SkillGapAnalyzer() {
   const [page,        setPage]        = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode,    setDarkMode]    = useState(true);
-  const [analysis,    setAnalysis]    = useState(DUMMY_ANALYSIS);
+  const [analysis,    setAnalysis]    = useState(null); // ← was DUMMY_ANALYSIS
   const [profile,     setProfile]     = useState({ name: "", email: "", role: "" });
 
   const isDesktop = useBreakpoint();
@@ -47,7 +46,7 @@ export default function SkillGapAnalyzer() {
 
   const navigate = useCallback((p) => {
     setPage(p);
-    if (!isDesktop) setSidebarOpen(false); // always close on mobile after nav
+    if (!isDesktop) setSidebarOpen(false);
   }, [isDesktop]);
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -59,7 +58,7 @@ export default function SkillGapAnalyzer() {
         background: "var(--bg-base)",
         fontFamily: "var(--font-body)",
         color: "var(--text-primary)",
-        height: "100svh",           // svh = small viewport height (handles mobile browser chrome)
+        height: "100svh",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -67,23 +66,10 @@ export default function SkillGapAnalyzer() {
     >
       <GlobalStyles />
 
-      {/*
-        Layout strategy:
-        ─ Mobile/tablet (< 1024px):
-            Sidebar is FIXED OVERLAY — it sits on top of content, never pushes it.
-            Bottom nav handles primary navigation.
-            Backdrop dims the page behind the open sidebar.
-
-        ─ Desktop (≥ 1024px):
-            Sidebar is IN-FLOW — takes up space to the left of main content.
-            Bottom nav is hidden.
-      */}
-
       <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative" }}>
 
         {/* ── Sidebar ── */}
         {isDesktop ? (
-          /* Desktop: in-flow, always rendered, animated width */
           <Sidebar
             open={sidebarOpen}
             isDesktop={true}
@@ -93,11 +79,9 @@ export default function SkillGapAnalyzer() {
             onClose={closeSidebar}
           />
         ) : (
-          /* Mobile/tablet: fixed overlay, animated x position */
           <AnimatePresence>
             {sidebarOpen && (
               <>
-                {/* Backdrop */}
                 <motion.div
                   key="backdrop"
                   initial={{ opacity: 0 }}
@@ -112,7 +96,6 @@ export default function SkillGapAnalyzer() {
                     WebkitBackdropFilter: "blur(3px)",
                   }}
                 />
-                {/* Sidebar panel */}
                 <motion.div
                   key="sidebar"
                   initial={{ x: "-100%" }}
@@ -152,7 +135,6 @@ export default function SkillGapAnalyzer() {
               flex: 1,
               overflowY: "auto",
               overflowX: "hidden",
-              // Leave room for bottom nav on mobile
               paddingBottom: isDesktop ? 0 : 64,
             }}
           >
@@ -189,13 +171,13 @@ export default function SkillGapAnalyzer() {
 
 function PageRouter({ page, analysis, setAnalysis, addToast, profile, setProfile, onNavigate }) {
   switch (page) {
-    case "dashboard": return <Dashboard   analysis={analysis} loading={false} onNavigate={onNavigate} />;
-    case "analyze":   return <Analyze     onAnalysis={setAnalysis} addToast={addToast} />;
-    case "reports":   return <Reports     analysis={analysis} />;
+    case "dashboard": return <Dashboard    analysis={analysis} loading={false} onNavigate={onNavigate} />;
+    case "analyze":   return <Analyze      onAnalysis={setAnalysis} addToast={addToast} />;
+    case "reports":   return <Reports      analysis={analysis} />;
     case "learning":  return <LearningPath analysis={analysis} onNavigate={onNavigate} />;
-    case "profile":   return <Profile     profile={profile} onProfileSave={setProfile} analysis={analysis} addToast={addToast} />;
-    case "settings":  return <Settings    profile={profile} onProfileSave={setProfile} addToast={addToast} />;
-    default:          return <Dashboard   analysis={analysis} loading={false} onNavigate={onNavigate} />;
+    case "profile":   return <Profile      profile={profile} onProfileSave={setProfile} analysis={analysis} addToast={addToast} />;
+    case "settings":  return <Settings     profile={profile} onProfileSave={setProfile} addToast={addToast} />;
+    default:          return <Dashboard    analysis={analysis} loading={false} onNavigate={onNavigate} />;
   }
 }
 
