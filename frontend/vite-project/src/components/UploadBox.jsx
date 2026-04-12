@@ -1,11 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 
-/**
- * UploadBox
- * Drag-and-drop (or click-to-browse) file upload area.
- * Props: label, file, setFile, accept
- */
 export default function UploadBox({ label, file, setFile, accept }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
@@ -24,11 +19,10 @@ export default function UploadBox({ label, file, setFile, accept }) {
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
       animate={{
-        borderColor: dragging ? "#6366f1" : "rgba(255,255,255,0.1)",
-        background:  dragging ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)",
+        borderColor: dragging ? "#6366f1" : "var(--border-strong)",
+        background:  dragging ? "rgba(99,102,241,0.08)" : "var(--bg-card)",
       }}
-      className="rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer transition-all
-        hover:border-indigo-500/50 hover:bg-white/5"
+      style={{ borderRadius: 16, borderWidth: 2, borderStyle: "dashed", padding: "40px 24px", textAlign: "center", cursor: "pointer" }}
     >
       <input
         ref={inputRef}
@@ -39,29 +33,48 @@ export default function UploadBox({ label, file, setFile, accept }) {
       />
 
       {file ? (
-        /* ── File selected state ── */
         <div>
-          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-500/20 flex items-center justify-center text-2xl">
+          <div style={{
+            width: 48, height: 48, margin: "0 auto 12px",
+            borderRadius: 12,
+            background: "rgba(99,102,241,0.15)",
+            border: "1px solid rgba(99,102,241,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+          }}>
             📄
           </div>
-          <p className="text-white font-medium">{file.name}</p>
-          <p className="text-white/40 text-sm mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: 14 }}>{file.name}</p>
+          <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 4 }}>
+            {(file.size / 1024).toFixed(1)} KB
+          </p>
           <button
             onClick={(e) => { e.stopPropagation(); setFile(null); }}
-            className="mt-3 text-xs text-rose-400 hover:text-rose-300"
+            style={{
+              marginTop: 10, fontSize: 12,
+              color: "#f43f5e", background: "none", border: "none", cursor: "pointer",
+            }}
           >
             Remove
           </button>
         </div>
       ) : (
-        /* ── Empty / prompt state ── */
         <div>
-          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
+          <div style={{
+            width: 48, height: 48, margin: "0 auto 12px",
+            borderRadius: 12,
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+          }}>
             ⬆️
           </div>
-          <p className="text-white/80 font-medium">{label}</p>
-          <p className="text-white/40 text-sm mt-1">Drag & drop or click to browse</p>
-          <p className="text-white/30 text-xs mt-2">{accept?.replace(/,/g, " / ")}</p>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: 14 }}>{label}</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 12, marginTop: 4 }}>
+            Drag & drop or click to browse
+          </p>
+          <p style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 6 }}>
+            {accept?.replace(/,/g, " / ")}
+          </p>
         </div>
       )}
     </motion.div>

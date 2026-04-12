@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/**
- * SkillTag — pill badge with tooltip on hover
- * Props: skill (string), matched (bool)
- */
 export default function SkillTag({ skill, matched }) {
   const [hovered, setHovered] = useState(false);
 
   const style = matched
-    ? { bg: "rgba(16,185,129,0.1)", text: "#6ee7b7", border: "rgba(16,185,129,0.25)", glow: "rgba(16,185,129,0.2)" }
-    : { bg: "rgba(244,63,94,0.1)",  text: "#fda4af", border: "rgba(244,63,94,0.25)",  glow: "rgba(244,63,94,0.2)"  };
+    ? { bg: "rgba(16,185,129,0.1)", text: "#059669", border: "rgba(16,185,129,0.25)", glow: "rgba(16,185,129,0.2)" }
+    : { bg: "rgba(244,63,94,0.1)",  text: "#e11d48", border: "rgba(244,63,94,0.25)",  glow: "rgba(244,63,94,0.2)"  };
 
   const tooltipText = matched
     ? `✓ ${skill} is in your resume`
@@ -47,17 +43,16 @@ export default function SkillTag({ skill, matched }) {
             <div
               className="whitespace-nowrap px-2.5 py-1.5 rounded-lg text-[11px] font-medium"
               style={{
-                background: "#111118",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(220,220,240,0.85)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-strong)",
+                color: "var(--text-primary)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               {tooltipText}
             </div>
-            {/* Arrow */}
             <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid rgba(255,255,255,0.1)" }} />
+              style={{ borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid var(--border-strong)" }} />
           </motion.div>
         )}
       </AnimatePresence>
