@@ -1,37 +1,75 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, CheckCircle2, AlertCircle, Clock, TrendingUp, ArrowRight, RefreshCw, Route } from "lucide-react";
+import {
+  Zap, CheckCircle2, AlertCircle, Clock,
+  TrendingUp, ArrowRight, RefreshCw, Route,
+} from "lucide-react";
 
-import CircularProgress  from "../components/CircularProgress";
-import StatCard          from "../components/StatCard";
-import Skeleton          from "../components/Skeleton";
+import CircularProgress from "../components/CircularProgress";
 import { SkillsRadarChart, SkillsBarChart, ProgressAreaChart } from "../components/Charts";
 
-// ── Time-aware greeting ───────────────────────────────────────────────────────
-function getGreeting(hour) {
-  if (hour >= 5  && hour < 12) return { text: "Good morning",   emoji: "☀️",  msg: "Start your day with a quick skill check!" };
-  if (hour >= 12 && hour < 14) return { text: "Good afternoon", emoji: "🌤️", msg: "Fuel up and keep pushing toward your goals." };
-  if (hour >= 14 && hour < 17) return { text: "Good afternoon", emoji: "⚡", msg: "Peak focus hours — great time to learn something new." };
-  if (hour >= 17 && hour < 20) return { text: "Good evening",   emoji: "🌇", msg: "Great work today. Review your progress?" };
-  if (hour >= 20 && hour < 23) return { text: "Good evening",   emoji: "🌙", msg: "Night grind? Respect. Let's close those skill gaps." };
-  return                               { text: "Up late?",       emoji: "🦉", msg: "True developers never sleep. Let's keep building." };
+function getGreeting(h) {
+  if (h >= 5  && h < 12) return { text: "Good morning",   emoji: "☀️",  msg: "Start your day with a quick skill check!" };
+  if (h >= 12 && h < 14) return { text: "Good afternoon", emoji: "🌤️", msg: "Fuel up and keep pushing toward your goals." };
+  if (h >= 14 && h < 17) return { text: "Good afternoon", emoji: "⚡", msg: "Peak focus hours — great time to learn." };
+  if (h >= 17 && h < 20) return { text: "Good evening",   emoji: "🌇", msg: "Great work today. Review your progress?" };
+  if (h >= 20 && h < 23) return { text: "Good evening",   emoji: "🌙", msg: "Night grind? Respect. Let's close those gaps." };
+  return                         { text: "Up late?",       emoji: "🦉", msg: "True developers never sleep. Let's build." };
 }
 
 const TIPS = [
   "🔥 AI & ML skills are the #1 demand in 2025 job listings",
-  "⚡ Docker + Kubernetes combo unlocks DevOps roles at 2x salary",
-  "🚀 TypeScript is now required in 80% of Frontend job descriptions",
+  "⚡ Docker + Kubernetes combo unlocks DevOps roles at 2× salary",
+  "🚀 TypeScript required in 80% of Frontend job descriptions",
   "🧠 LLM fine-tuning and RAG are the hottest emerging skills right now",
   "☁️ AWS Solutions Architect is the most in-demand cloud cert globally",
-  "💡 GraphQL adoption is up 60% — a must-have for senior API roles",
+  "💡 GraphQL adoption up 60% — must-have for senior API roles",
 ];
 
+// Compact KPI tile
+function Kpi({ icon: Icon, label, value, sub, color, delay }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.38 }}
+      whileHover={{ y: -2 }}
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 14,
+        padding: "16px 14px",
+        position: "relative", overflow: "hidden",
+      }}
+    >
+      <div style={{
+        position: "absolute", top: -10, right: -10, width: 60, height: 60,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, ${color}55 0%, transparent 70%)`,
+        filter: "blur(10px)", pointerEvents: "none",
+      }} />
+      <div style={{
+        width: 32, height: 32, borderRadius: 9, marginBottom: 12,
+        background: `${color}18`, border: `1px solid ${color}2a`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <Icon size={15} style={{ color }} />
+      </div>
+      <p style={{ fontSize: "clamp(20px, 4vw, 26px)", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, marginBottom: 3, letterSpacing: "-0.02em" }}>
+        {value}
+      </p>
+      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 2 }}>{label}</p>
+      {sub && <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub}</p>}
+    </motion.div>
+  );
+}
+
 export default function Dashboard({ analysis, loading, onNavigate }) {
-  const [tipIndex, setTipIndex] = useState(0);
-  const [now,      setNow]      = useState(new Date());
+  const [tipIdx, setTipIdx] = useState(0);
+  const [now,    setNow]    = useState(new Date());
 
   useEffect(() => {
-    const t = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 4000);
+    const t = setInterval(() => setTipIdx(i => (i + 1) % TIPS.length), 4500);
     return () => clearInterval(t);
   }, []);
 
@@ -40,360 +78,238 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
     return () => clearInterval(t);
   }, []);
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading) return <Skeleton />;
 
   const matched  = analysis?.matched_skills?.length ?? 0;
   const missing  = analysis?.missing_skills?.length ?? 0;
   const total    = matched + missing;
-  const matchPct = analysis?.match_percentage ?? 0;
-  const hour = now.getHours();
-  const { text: greetingText, emoji, msg: greetingMsg } = getGreeting(hour);
+  const pct      = analysis?.match_percentage ?? 0;
+  const { text, emoji, msg } = getGreeting(now.getHours());
+  const dateStr  = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative min-h-full"
-      style={{ background: "var(--bg-base)" }}
+      style={{ background: "var(--bg-base)", minHeight: "100%", position: "relative" }}
     >
-      {/* ── Ambient background glows ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #4f8ef7, transparent 65%)", filter: "blur(80px)" }} />
-        <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full opacity-15"
-          style={{ background: "radial-gradient(circle, #a855f7, transparent 65%)", filter: "blur(80px)" }} />
-        <div className="absolute -bottom-20 left-1/3 w-72 h-72 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #6366f1, transparent 65%)", filter: "blur(80px)" }} />
+      {/* Ambient glows */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+        <div style={{ position: "absolute", top: -60, left: -60, width: 280, height: 280, borderRadius: "50%", opacity: 0.15, background: "radial-gradient(circle, #4f8ef7, transparent 65%)", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", bottom: 0, right: -40, width: 240, height: 240, borderRadius: "50%", opacity: 0.1, background: "radial-gradient(circle, #a855f7, transparent 65%)", filter: "blur(60px)" }} />
       </div>
 
-      <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "20px 16px 32px" }}>
 
-        {/* ── Hero Banner ── */}
+        {/* ═══ HERO ═══ */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="relative rounded-3xl overflow-hidden"
+          transition={{ duration: 0.4 }}
           style={{
-            background: "linear-gradient(135deg, rgba(79,142,247,0.15) 0%, rgba(99,102,241,0.12) 40%, rgba(168,85,247,0.1) 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 20, overflow: "hidden", marginBottom: 14,
+            background: "linear-gradient(135deg, rgba(79,142,247,0.13) 0%, rgba(99,102,241,0.09) 50%, rgba(168,85,247,0.07) 100%)",
+            border: "1px solid rgba(255,255,255,0.1)", position: "relative",
           }}
         >
-          {/* Grid pattern */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.07]"
-            style={{
-              backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-            }} />
+          {/* Grid texture */}
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.05, backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
+          {/* Top line */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, rgba(79,142,247,0.6) 40%, rgba(168,85,247,0.6) 60%, transparent)" }} />
 
-          {/* Gradient border top */}
-          <div className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: "linear-gradient(90deg, transparent, rgba(79,142,247,0.5), rgba(168,85,247,0.5), transparent)" }} />
-
-          <div className="relative p-8 flex flex-col lg:flex-row items-start lg:items-center gap-8">
-            {/* Left — text */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ background: "rgba(79,142,247,0.15)", border: "1px solid rgba(79,142,247,0.25)", color: "#93c5fd" }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                  Live Dashboard
-                </div>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
-                </span>
+          <div style={{ padding: "22px 20px 0" }}>
+            {/* Badge + date */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, background: "rgba(79,142,247,0.15)", border: "1px solid rgba(79,142,247,0.28)", fontSize: 11, fontWeight: 600, color: "#93c5fd" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4f8ef7", boxShadow: "0 0 5px #4f8ef7" }} />
+                Live Dashboard
               </div>
-
-              <h1 className="text-3xl lg:text-4xl font-bold mb-1" style={{ letterSpacing: "-0.02em" }}>
-                <span style={{ color: "var(--text-primary)" }}>{greetingText} </span>
-                <span>{emoji}</span>
-              </h1>
-
-              <p className="text-sm font-medium mb-3" style={{ color: "rgba(200,200,220,0.45)" }}>
-                {greetingMsg}
-              </p>
-
-              <p className="text-sm mb-5 max-w-lg leading-relaxed" style={{ color: "rgba(200,200,220,0.55)" }}>
-                Your profile is{" "}
-                <span className="font-semibold" style={{
-                  background: "linear-gradient(135deg, #4f8ef7, #a855f7)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}>
-                  {matchPct}% aligned
-                </span>{" "}
-                with your target role. Close{" "}
-                <span style={{ color: "#fda4af", fontWeight: 600 }}>{missing} skill{missing !== 1 ? "s" : ""}</span>{" "}
-                to reach full job readiness.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onNavigate("analyze")}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg, #4f8ef7, #6366f1)", boxShadow: "0 8px 24px rgba(79,142,247,0.3)" }}
-                >
-                  <RefreshCw size={14} />
-                  Run New Analysis
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onNavigate("learning")}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    color: "rgba(220,220,240,0.8)",
-                  }}
-                >
-                  <Route size={14} />
-                  View Learning Path
-                  <ArrowRight size={13} />
-                </motion.button>
-              </div>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{dateStr}</span>
             </div>
 
-            {/* Right — score ring */}
-            <div className="relative flex items-center justify-center shrink-0">
-              <div className="absolute inset-0 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(79,142,247,0.2) 0%, transparent 70%)", filter: "blur(24px)" }} />
-              <div className="relative w-40 h-40 flex items-center justify-center">
-                <CircularProgress value={matchPct} size={160} stroke={12} id="hero" />
-                <div className="absolute text-center">
-                  <p className="text-4xl font-bold tabular-nums" style={{
-                    background: "linear-gradient(135deg, #4f8ef7, #a855f7)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}>
-                    {matchPct}%
-                  </p>
-                  <p className="text-xs font-medium mt-0.5" style={{ color: "var(--text-muted)" }}>Match Score</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(200,200,220,0.35)" }}>
-                    {analysis?.job_domain}
-                  </p>
+            {/* Text + ring */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16, justifyContent: "space-between", flexWrap: "wrap" }}>
+
+              {/* Text side */}
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <h1 style={{ fontSize: "clamp(22px, 5vw, 38px)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 6 }}>
+                  {text} {emoji}
+                </h1>
+                <p style={{ fontSize: 13, color: "rgba(200,200,220,0.42)", fontWeight: 500, marginBottom: 8 }}>{msg}</p>
+                <p style={{ fontSize: 13, color: "rgba(200,200,220,0.55)", lineHeight: 1.65, marginBottom: 20, maxWidth: 400 }}>
+                  Your profile is{" "}
+                  <span style={{ fontWeight: 700, background: "linear-gradient(135deg,#4f8ef7,#a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                    {pct}% aligned
+                  </span>
+                  {" "}with your target role.{" "}
+                  <span style={{ color: "#fda4af", fontWeight: 600 }}>Close {missing} skill{missing !== 1 ? "s" : ""}</span>
+                  {" "}to reach full readiness.
+                </p>
+
+                {/* CTAs */}
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => onNavigate("analyze")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 44, padding: "0 20px", borderRadius: 12, background: "linear-gradient(135deg,#4f8ef7,#6366f1)", boxShadow: "0 8px 22px rgba(79,142,247,0.32)", fontSize: 13, fontWeight: 700, color: "white", cursor: "pointer", border: "none", flex: "1 1 140px", minWidth: 140 }}>
+                    <RefreshCw size={14} /> Run New Analysis
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => onNavigate("learning")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 44, padding: "0 20px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", fontSize: 13, fontWeight: 600, color: "rgba(220,220,240,0.85)", cursor: "pointer", flex: "1 1 140px", minWidth: 140 }}>
+                    <Route size={14} /> Learning Path <ArrowRight size={12} />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Score ring */}
+              <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ position: "relative", width: 124, height: 124 }}>
+                  <div style={{ position: "absolute", inset: -14, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,142,247,0.22) 0%, transparent 70%)", filter: "blur(14px)", pointerEvents: "none" }} />
+                  <CircularProgress value={pct} size={124} stroke={11} id="hero-v3" />
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                    <p style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, marginBottom: 3, background: "linear-gradient(135deg,#4f8ef7,#a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                      {pct}%
+                    </p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>Match</p>
+                    {analysis?.job_domain && (
+                      <p style={{ fontSize: 10, color: "rgba(200,200,220,0.28)", marginTop: 2 }}>{analysis.job_domain}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Ticker bar */}
-          <div className="relative px-8 py-3 flex items-center gap-3"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.2)" }}>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Zap size={11} style={{ color: "#fbbf24" }} />
-              <span className="text-[11px] font-semibold" style={{ color: "#fbbf24" }}>Tip</span>
-            </div>
+          {/* Tip ticker */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", marginTop: 20, background: "rgba(0,0,0,0.18)", borderTop: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <Zap size={12} style={{ color: "#fbbf24", flexShrink: 0 }} />
             <AnimatePresence mode="wait">
-              <motion.p
-                key={tipIndex}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.3 }}
-                className="text-[11px]"
-                style={{ color: "rgba(200,200,220,0.5)" }}
-              >
-                {TIPS[tipIndex]}
+              <motion.p key={tipIdx} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.25 }}
+                style={{ fontSize: 12, color: "rgba(200,200,220,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {TIPS[tipIdx]}
               </motion.p>
             </AnimatePresence>
           </div>
         </motion.div>
 
-        {/* ── KPI cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            icon={TrendingUp}
-            label="Job Readiness"
-            value={analysis?.job_readiness ?? "—"}
-            sub={analysis?.job_domain}
-            color="#4f8ef7"
-            delay={0}
-          />
-          <StatCard
-            icon={CheckCircle2}
-            label="Skills Matched"
-            value={`${matched}`}
-            sub={`of ${total} required`}
-            color="#10b981"
-            delay={0.08}
-          />
-          <StatCard
-            icon={AlertCircle}
-            label="Skills Missing"
-            value={`${missing}`}
-            sub="need to be learned"
-            color="#f43f5e"
-            delay={0.16}
-          />
-          <StatCard
-            icon={Clock}
-            label="Time to Ready"
-            value={analysis?.estimated_time_to_job_ready ?? "—"}
-            sub="with focused effort"
-            color="#f59e0b"
-            delay={0.24}
-          />
+        {/* ═══ KPI GRID ═══ */}
+        <div className="dash-kpi" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <Kpi icon={TrendingUp}   label="Job Readiness"  value={analysis?.job_readiness ?? "—"}                     sub={analysis?.job_domain}  color="#4f8ef7" delay={0}    />
+          <Kpi icon={CheckCircle2} label="Skills Matched"  value={`${matched}`}                                        sub={`of ${total} required`} color="#10b981" delay={0.07} />
+          <Kpi icon={AlertCircle}  label="Skills Missing"  value={`${missing}`}                                        sub="to be learned"          color="#f43f5e" delay={0.14} />
+          <Kpi icon={Clock}        label="Time to Ready"   value={analysis?.estimated_time_to_job_ready ?? "—"}        sub="with focused effort"    color="#f59e0b" delay={0.21} />
         </div>
 
-        {/* ── Skill snapshot ── */}
+        {/* ═══ SKILL SNAPSHOT ═══ */}
         {analysis && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-2xl p-6"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-5">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "18px 16px", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div>
-                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Skill Snapshot</h3>
-                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>From your last analysis</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>Skill Snapshot</p>
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>From your last analysis</p>
               </div>
-              <button
-                onClick={() => onNavigate("analyze")}
-                className="flex items-center gap-1.5 text-xs font-medium hover:text-blue-300 transition-colors"
-                style={{ color: "#4f8ef7" }}
-              >
+              <button onClick={() => onNavigate("analyze")} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: "#4f8ef7", background: "none", border: "none", cursor: "pointer", minHeight: 32 }}>
                 Re-analyze <ArrowRight size={12} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#6ee7b7" }}>
-                  ✓ Matched Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.matched_skills?.map((s, i) => (
-                    <motion.span
-                      key={s}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.35 + i * 0.04 }}
-                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                      style={{ background: "rgba(16,185,129,0.1)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.2)" }}
-                    >
-                      {s}
-                    </motion.span>
-                  ))}
-                </div>
-              </div>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6ee7b7", marginBottom: 8 }}>✓ Matched</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+              {analysis.matched_skills?.map((s, i) => (
+                <motion.span key={s} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 + i * 0.03 }}
+                  style={{ padding: "5px 11px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: "rgba(16,185,129,0.12)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.22)" }}>
+                  {s}
+                </motion.span>
+              ))}
+            </div>
 
-              <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 14 }} />
 
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#fda4af" }}>
-                  ✕ Missing Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.missing_skills?.map((s, i) => (
-                    <motion.span
-                      key={s}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.5 + i * 0.04 }}
-                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                      style={{ background: "rgba(244,63,94,0.1)", color: "#fda4af", border: "1px solid rgba(244,63,94,0.2)" }}
-                    >
-                      {s}
-                    </motion.span>
-                  ))}
-                </div>
-              </div>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fda4af", marginBottom: 8 }}>✕ Missing</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {analysis.missing_skills?.map((s, i) => (
+                <motion.span key={s} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.45 + i * 0.03 }}
+                  style={{ padding: "5px 11px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: "rgba(244,63,94,0.12)", color: "#fda4af", border: "1px solid rgba(244,63,94,0.22)" }}>
+                  {s}
+                </motion.span>
+              ))}
             </div>
           </motion.div>
         )}
 
-        {/* ── Charts ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}>
+        {/* ═══ CHARTS ═══ */}
+        <div className="dash-charts" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14, marginBottom: 14 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
             <SkillsRadarChart />
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.42 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
             <SkillsBarChart />
           </motion.div>
         </div>
 
-        {/* ── Progress chart ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-2xl p-6"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <div className="flex items-center justify-between mb-6">
+        {/* Progress chart */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }}
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "18px 16px", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Learning Progress</h3>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Readiness score over time</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>Learning Progress</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Readiness score over time</p>
             </div>
-            <div className="flex gap-1.5">
-              {["1W", "1M", "3M"].map(t => (
-                <button key={t} className="text-[11px] px-2.5 py-1 rounded-lg font-medium transition-colors"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(200,200,220,0.4)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                  {t}
-                </button>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["1W","1M","3M"].map(t => (
+                <button key={t} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(200,200,220,0.45)", cursor: "pointer", minHeight: 30 }}>{t}</button>
               ))}
             </div>
           </div>
-          <ProgressAreaChart gradientId="dashGrad" height={200} />
+          <ProgressAreaChart gradientId="dashGradV3" height={180} />
         </motion.div>
 
-        {/* ── Quick action cards ── */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.58 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-        >
-          {[
-            { label: "Analyze Resume",    sub: "Upload & get instant insights",  icon: RefreshCw, page: "analyze",  color: "#4f8ef7" },
-            { label: "View Reports",      sub: "Detailed skill gap breakdown",    icon: TrendingUp, page: "reports", color: "#a855f7" },
-            { label: "Start Learning",    sub: "Follow your 8-week roadmap",      icon: Route,     page: "learning", color: "#10b981" },
-          ].map(({ label, sub, icon: Icon, page, color }) => (
-            <motion.button
-              key={label}
-              onClick={() => onNavigate(page)}
-              whileHover={{ y: -3, boxShadow: `0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px ${color}22` }}
-              whileTap={{ scale: 0.98 }}
-              className="p-5 rounded-2xl text-left group transition-all"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                style={{ background: `${color}18`, border: `1px solid ${color}28` }}>
-                <Icon size={16} style={{ color }} />
-              </div>
-              <p className="text-sm font-semibold mb-0.5 group-hover:text-white transition-colors"
-                style={{ color: "rgba(220,220,240,0.8)" }}>{label}</p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{sub}</p>
-            </motion.button>
-          ))}
+        {/* ═══ QUICK ACTIONS ═══ */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 10 }}>Quick Actions</p>
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+            {[
+              { label: "Analyze Resume", sub: "Upload & get insights",  Icon: RefreshCw,  page: "analyze",  color: "#4f8ef7" },
+              { label: "View Reports",   sub: "Skill gap breakdown",     Icon: TrendingUp, page: "reports",  color: "#a855f7" },
+              { label: "Start Learning", sub: "Follow 8-week roadmap",   Icon: Route,      page: "learning", color: "#10b981" },
+            ].map(({ label, sub, Icon, page, color }) => (
+              <motion.button key={label} onClick={() => onNavigate(page)} whileTap={{ scale: 0.96 }}
+                style={{ flexShrink: 0, width: 158, padding: "16px 14px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, marginBottom: 12, background: `${color}18`, border: `1px solid ${color}28`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon size={15} style={{ color }} />
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "rgba(220,220,240,0.85)", marginBottom: 3 }}>{label}</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.3 }}>{sub}</p>
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
 
       </div>
+
+      {/* Responsive rules */}
+      <style>{`
+        @media (min-width: 768px) {
+          .dash-kpi    { grid-template-columns: repeat(4, 1fr) !important; }
+          .dash-charts { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
     </motion.div>
   );
 }
 
-function DashboardSkeleton() {
+function Skeleton() {
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
-      <Skeleton className="h-52 w-full" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
-      </div>
-      <Skeleton className="h-40 w-full" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
-      </div>
-      <Skeleton className="h-56 w-full" />
+    <div style={{ padding: "20px 16px", maxWidth: 1200, margin: "0 auto" }}>
+      {[260, 120, 160, 260].map((h, i) => (
+        <div key={i} style={{
+          height: h, borderRadius: 16, marginBottom: 14,
+          background: "rgba(255,255,255,0.04)",
+          animation: "shimmer 1.8s infinite",
+          backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 100%)",
+          backgroundSize: "200% 100%",
+        }} />
+      ))}
+      <style>{`@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }`}</style>
     </div>
   );
 }
