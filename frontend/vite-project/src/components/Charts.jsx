@@ -6,58 +6,86 @@ import {
 } from "recharts";
 import { RADAR_DATA, BAR_DATA, LINE_DATA } from "../data/constants";
 
-// ─── Glass tooltip ────────────────────────────────────────────────────────────
+// ─── Detect light mode once (re-checks on each render is fine) ───────────────
+function isLight() {
+  return document.documentElement.classList.contains("light-mode") ||
+         document.body.classList.contains("light-mode") ||
+         !!document.querySelector(".light-mode");
+}
+
+// ─── Theme tokens ─────────────────────────────────────────────────────────────
+function tokens() {
+  const light = isLight();
+  return {
+    cardBg:       light ? "rgba(255,255,255,0.9)"    : "rgba(255,255,255,0.04)",
+    cardBorder:   light ? "rgba(0,0,0,0.08)"          : "rgba(255,255,255,0.08)",
+    gridStroke:   light ? "rgba(0,0,0,0.06)"          : "rgba(255,255,255,0.06)",
+    tickFill:     light ? "rgba(20,20,50,0.45)"       : "rgba(200,200,220,0.38)",
+    titleColor:   light ? "#0f1117"                   : "#f0f0ff",
+    subtitleColor:light ? "rgba(20,20,50,0.45)"       : "rgba(200,200,220,0.4)",
+    tooltipBg:    light ? "rgba(255,255,255,0.97)"    : "rgba(10,10,20,0.92)",
+    tooltipBorder:light ? "rgba(0,0,0,0.12)"          : "rgba(255,255,255,0.12)",
+    tooltipLabel: light ? "rgba(20,20,50,0.5)"        : "rgba(200,200,220,0.5)",
+    tooltipValue: light ? "#0f1117"                   : "#f0f0ff",
+    tooltipText:  light ? "rgba(20,20,50,0.75)"       : "rgba(200,200,220,0.7)",
+    cursorFill:   light ? "rgba(0,0,0,0.03)"          : "rgba(255,255,255,0.03)",
+    dotStroke:    light ? "#ffffff"                   : "#0d0d14",
+    legendColor:  light ? "rgba(20,20,50,0.5)"        : "rgba(200,200,220,0.4)",
+    activeDotFill:light ? "#4f8ef7"                   : "#93c5fd",
+  };
+}
+
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
 export function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
+  const t = tokens();
   return (
     <div style={{
-      background: "rgba(10,10,20,0.92)",
-      border: "1px solid rgba(255,255,255,0.12)",
+      background: t.tooltipBg,
+      border: `1px solid ${t.tooltipBorder}`,
       borderRadius: 12,
       padding: "10px 14px",
-      boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+      boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
       backdropFilter: "blur(20px)",
     }}>
-      <p style={{ fontSize: 11, color: "rgba(200,200,220,0.5)", marginBottom: 8 }}>{label}</p>
+      <p style={{ fontSize: 11, color: t.tooltipLabel, marginBottom: 8 }}>{label}</p>
       {payload.map((p, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: i < payload.length - 1 ? 4 : 0 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color }} />
-          <span style={{ fontSize: 12, color: "rgba(200,200,220,0.7)" }}>{p.name}:</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#f0f0ff" }}>{p.value}</span>
+          <span style={{ fontSize: 12, color: t.tooltipText }}>{p.name}:</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: t.tooltipValue }}>{p.value}</span>
         </div>
       ))}
     </div>
   );
 }
 
-const tickStyle = { fill: "rgba(200,200,220,0.35)", fontSize: 11, fontFamily: "Outfit, sans-serif" };
-
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 function ChartCard({ title, subtitle, legend, children }) {
+  const t = tokens();
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: t.cardBg,
+        border: `1px solid ${t.cardBorder}`,
         borderRadius: 16,
         padding: 24,
-        backdropFilter: "blur(20px)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#f0f0ff", marginBottom: 2 }}>{title}</p>
-          {subtitle && <p style={{ fontSize: 11, color: "rgba(200,200,220,0.4)" }}>{subtitle}</p>}
+          <p style={{ fontSize: 14, fontWeight: 600, color: t.titleColor, marginBottom: 2 }}>{title}</p>
+          {subtitle && <p style={{ fontSize: 11, color: t.subtitleColor }}>{subtitle}</p>}
         </div>
         {legend && (
           <div style={{ display: "flex", gap: 16 }}>
             {legend.map(l => (
               <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
-                <span style={{ fontSize: 11, color: "rgba(200,200,220,0.4)" }}>{l.label}</span>
+                <span style={{ fontSize: 11, color: t.subtitleColor }}>{l.label}</span>
               </div>
             ))}
           </div>
@@ -70,6 +98,8 @@ function ChartCard({ title, subtitle, legend, children }) {
 
 // ─── Radar ────────────────────────────────────────────────────────────────────
 export function SkillsRadarChart() {
+  const t = tokens();
+  const tickStyle = { fill: t.tickFill, fontSize: 10, fontFamily: "Outfit, sans-serif" };
   return (
     <ChartCard
       title="Skills Comparison"
@@ -78,8 +108,8 @@ export function SkillsRadarChart() {
     >
       <ResponsiveContainer width="100%" height={260}>
         <RadarChart data={RADAR_DATA} margin={{ top: 0, right: 20, bottom: 0, left: 20 }}>
-          <PolarGrid stroke="rgba(255,255,255,0.06)" />
-          <PolarAngleAxis dataKey="skill" tick={{ ...tickStyle, fontSize: 10 }} />
+          <PolarGrid stroke={t.gridStroke} />
+          <PolarAngleAxis dataKey="skill" tick={tickStyle} />
           <PolarRadiusAxis tick={false} axisLine={false} />
           <Radar
             name="Resume" dataKey="resume"
@@ -100,6 +130,8 @@ export function SkillsRadarChart() {
 
 // ─── Bar ──────────────────────────────────────────────────────────────────────
 export function SkillsBarChart() {
+  const t = tokens();
+  const tickStyle = { fill: t.tickFill, fontSize: 11, fontFamily: "Outfit, sans-serif" };
   return (
     <ChartCard
       title="Skills Breakdown"
@@ -117,12 +149,12 @@ export function SkillsBarChart() {
               <stop offset="100%" stopColor="#e11d48" stopOpacity={0.6} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={t.gridStroke} vertical={false} />
           <XAxis dataKey="category" tick={tickStyle} axisLine={false} tickLine={false} />
           <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
-          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: t.cursorFill }} />
           <Legend
-            wrapperStyle={{ fontSize: 11, color: "rgba(200,200,220,0.4)", paddingTop: 12 }}
+            wrapperStyle={{ fontSize: 11, color: t.legendColor, paddingTop: 12 }}
             iconType="circle" iconSize={8}
           />
           <Bar dataKey="matched" name="Matched" fill="url(#barMatched)" radius={[6, 6, 0, 0]} maxBarSize={32} />
@@ -133,8 +165,10 @@ export function SkillsBarChart() {
   );
 }
 
-// ─── Area / progress ──────────────────────────────────────────────────────────
+// ─── Area ─────────────────────────────────────────────────────────────────────
 export function ProgressAreaChart({ gradientId = "pgGrad", height = 200 }) {
+  const t = tokens();
+  const tickStyle = { fill: t.tickFill, fontSize: 11, fontFamily: "Outfit, sans-serif" };
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={LINE_DATA} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
@@ -144,10 +178,10 @@ export function ProgressAreaChart({ gradientId = "pgGrad", height = 200 }) {
             <stop offset="100%" stopColor="#4f8ef7" stopOpacity={0}    />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={t.gridStroke} vertical={false} />
         <XAxis dataKey="week" tick={tickStyle} axisLine={false} tickLine={false} />
         <YAxis tick={tickStyle} axisLine={false} tickLine={false} domain={[0, 100]} />
-        <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(79,142,247,0.2)", strokeWidth: 1 }} />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(79,142,247,0.25)", strokeWidth: 1 }} />
         <Area
           type="monotone"
           dataKey="score"
@@ -155,8 +189,8 @@ export function ProgressAreaChart({ gradientId = "pgGrad", height = 200 }) {
           stroke="#4f8ef7"
           strokeWidth={2.5}
           fill={`url(#${gradientId})`}
-          dot={{ fill: "#4f8ef7", r: 4, strokeWidth: 2, stroke: "#0d0d14" }}
-          activeDot={{ r: 6, fill: "#93c5fd", stroke: "#0d0d14", strokeWidth: 2 }}
+          dot={{ fill: "#4f8ef7", r: 4, strokeWidth: 2, stroke: t.dotStroke }}
+          activeDot={{ r: 6, fill: t.activeDotFill, stroke: t.dotStroke, strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>
