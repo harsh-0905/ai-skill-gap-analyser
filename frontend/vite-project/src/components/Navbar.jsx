@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, Bell, Sun, Moon, LogOut, User,
   Settings, ChevronDown, X, Search,
-  LayoutDashboard, Route, BarChart2, TrendingUp, Zap,
+  LayoutDashboard, ScanSearch, BarChart3, GraduationCap, Zap,
 } from "lucide-react";
 
 const NOTIFICATIONS = [
@@ -12,28 +12,40 @@ const NOTIFICATIONS = [
   { text: "Weekly progress report is ready",        time: "Yesterday", color: "#a855f7" },
 ];
 
+// IDs match PageRouter in SkillGapAnalyzer.jsx exactly
 const NAV_TABS = [
-  { id: "dashboard",  label: "Dashboard",     Icon: LayoutDashboard },
-  { id: "learning",   label: "Learning Path", Icon: Route           },
-  { id: "reports",    label: "Progress",      Icon: BarChart2       },
-  { id: "analytics",  label: "Analytics",     Icon: TrendingUp      },
+  { id: "dashboard", label: "Dashboard",     Icon: LayoutDashboard },
+  { id: "analyze",   label: "Analyze",       Icon: ScanSearch      },
+  { id: "reports",   label: "Reports",       Icon: BarChart3       },
+  { id: "learning",  label: "Learning Path", Icon: GraduationCap   },
 ];
 
 export default function Navbar({
   darkMode, setDarkMode,
   sidebarOpen, setSidebarOpen,
   profile, onNavigate, isDesktop,
-  activeTab = "dashboard", onTabChange,
+  page,       // ← current active page from SkillGapAnalyzer state
+  onSignOut,  // ← reset handler from SkillGapAnalyzer
 }) {
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [profileOpen,   setProfileOpen]   = useState(false);
   const [searchValue,   setSearchValue]   = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const initials = (profile?.name || "HY")
+  const initials = (profile?.name || "??")
     .split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   const closeAll = () => { setNotifOpen(false); setProfileOpen(false); };
+
+  const handleNav = (id) => {
+    onNavigate?.(id);
+    closeAll();
+  };
+
+  const handleSignOut = () => {
+    closeAll();
+    onSignOut?.();
+  };
 
   return (
     <>
@@ -53,7 +65,6 @@ export default function Navbar({
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
         }
-
         .sp-navbar::after {
           content: '';
           position: absolute; top: 0; left: 50%; transform: translateX(-50%);
@@ -73,7 +84,7 @@ export default function Navbar({
           padding: 0; line-height: 1;
         }
         .sp-ibtn:hover {
-          background: var(--bg-card-hover);
+          background: var(--bg-card-hover, rgba(255,255,255,0.08));
           border-color: var(--border-strong);
           color: var(--text-primary);
         }
@@ -126,9 +137,9 @@ export default function Navbar({
           transition: border-color 0.15s, background 0.15s, width 0.2s;
           cursor: text; flex-shrink: 0;
         }
-        .sp-search:hover { background: var(--bg-card-hover); }
+        .sp-search:hover { background: var(--bg-card-hover, rgba(255,255,255,0.07)); }
         .sp-search.focused {
-          background: var(--bg-card-hover);
+          background: var(--bg-card-hover, rgba(255,255,255,0.07));
           border-color: rgba(124,111,255,0.45);
           width: 210px;
         }
@@ -153,18 +164,6 @@ export default function Navbar({
           pointer-events: none;
         }
 
-        .sp-pro {
-          display: flex; align-items: center; gap: 5px;
-          height: 32px; padding: 0 12px; flex-shrink: 0;
-          background: rgba(124,111,255,0.12);
-          border: 1px solid rgba(124,111,255,0.28);
-          border-radius: 8px; font-size: 12.5px; font-weight: 500;
-          color: #8b7fff; cursor: pointer; white-space: nowrap;
-          transition: background 0.15s, border-color 0.15s;
-          font-family: inherit;
-        }
-        .sp-pro:hover { background: rgba(124,111,255,0.22); border-color: rgba(124,111,255,0.5); }
-
         .sp-avatar-btn {
           display: flex; align-items: center; gap: 6px;
           padding: 3px 7px 3px 3px; border-radius: 9px;
@@ -173,7 +172,10 @@ export default function Navbar({
           cursor: pointer; flex-shrink: 0;
           transition: background 0.14s, border-color 0.14s;
         }
-        .sp-avatar-btn:hover { background: var(--bg-card-hover); border-color: var(--border-strong); }
+        .sp-avatar-btn:hover {
+          background: var(--bg-card-hover, rgba(255,255,255,0.07));
+          border-color: var(--border-strong);
+        }
         .sp-avatar-circle {
           width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
           background: linear-gradient(135deg, #7c6fff, #ec4899);
@@ -181,13 +183,14 @@ export default function Navbar({
           font-size: 10px; font-weight: 700; color: #fff;
         }
 
-        /* Panel — fixed position on mobile to avoid overflow */
         .sp-panel {
-          position: absolute; z-index: 50;
+          position: fixed;
+          top: 58px; right: 8px;
+          z-index: 50;
           border-radius: 14px; padding: 8px;
           background: var(--bg-elevated);
           border: 1px solid var(--border-strong);
-          box-shadow: var(--shadow-card);
+          box-shadow: 0 20px 48px rgba(0,0,0,0.6);
         }
 
         .sp-nrow {
@@ -206,23 +209,31 @@ export default function Navbar({
           font-family: inherit;
         }
         .sp-mitem:hover { background: var(--bg-card); color: var(--text-primary); }
-        .sp-mitem.danger { color: rgba(244,63,94,0.8); }
-        .sp-mitem.danger:hover { background: rgba(244,63,94,0.08); color: rgb(244,63,94); }
+        .sp-mitem.danger { color: rgba(244,63,94,0.85); }
+        .sp-mitem.danger:hover { background: rgba(244,63,94,0.09); color: rgb(244,63,94); }
         .sp-mitem svg { display: block; flex-shrink: 0; stroke: currentColor; fill: none; }
 
         .sp-sep { height: 1px; background: var(--border); margin: 4px 0; }
 
-        @media (max-width: 980px) { .sp-tabs { display: none !important; } .sp-divider { display: none !important; } }
-        @media (max-width: 680px) { .sp-search { display: none !important; } .sp-pro { display: none !important; } }
+        @media (max-width: 980px) {
+          .sp-tabs    { display: none !important; }
+          .sp-divider { display: none !important; }
+        }
+        @media (max-width: 680px) {
+          .sp-search { display: none !important; }
+        }
       `}</style>
 
       <nav className="sp-navbar">
 
-        <button className="sp-ibtn" onClick={() => setSidebarOpen(p => !p)}
+        {/* Hamburger */}
+        <button className="sp-ibtn"
+          onClick={() => setSidebarOpen(p => !p)}
           aria-label={sidebarOpen ? "Close menu" : "Open menu"}>
           {!isDesktop && sidebarOpen ? <X size={15} /> : <Menu size={15} />}
         </button>
 
+        {/* Logo + Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <div className="sp-logo">
             <Zap size={15} strokeWidth={2.5} style={{ stroke: "none", fill: "#fff" }} />
@@ -234,17 +245,22 @@ export default function Navbar({
 
         <div className="sp-divider" />
 
+        {/* Nav Tabs — highlights based on `page` prop, calls onNavigate on click */}
         <div className="sp-tabs">
           {NAV_TABS.map(({ id, label, Icon }) => (
-            <button key={id}
-              className={`sp-tab${activeTab === id ? " active" : ""}`}
-              onClick={() => { onTabChange?.(id); closeAll(); }}>
+            <button
+              key={id}
+              className={`sp-tab${page === id ? " active" : ""}`}
+              onClick={() => handleNav(id)}
+              aria-current={page === id ? "page" : undefined}
+            >
               <Icon size={13} strokeWidth={1.8} />
               {label}
             </button>
           ))}
         </div>
 
+        {/* Search */}
         <div
           className={`sp-search${searchFocused ? " focused" : ""}`}
           onClick={() => document.getElementById("sp-search-inp")?.focus()}
@@ -258,12 +274,14 @@ export default function Navbar({
           {!searchFocused && <span className="sp-kbd">⌘K</span>}
         </div>
 
-        <button className="sp-ibtn" onClick={() => setDarkMode?.(p => !p)}
+        {/* Dark / Light mode */}
+        <button className="sp-ibtn"
+          onClick={() => setDarkMode?.(p => !p)}
           aria-label={darkMode ? "Light mode" : "Dark mode"}>
           {darkMode ? <Sun size={15} strokeWidth={2} /> : <Moon size={15} strokeWidth={2} />}
         </button>
 
-        {/* Bell — notification panel mobile-safe */}
+        {/* Notifications */}
         <div style={{ position: "relative" }}>
           <button className="sp-ibtn"
             onClick={() => { setNotifOpen(p => !p); setProfileOpen(false); }}
@@ -275,32 +293,19 @@ export default function Navbar({
           <AnimatePresence>
             {notifOpen && (
               <>
-                {/* Backdrop for mobile */}
-                <div
-                  style={{
-                    position: "fixed", inset: 0, zIndex: 40,
-                    background: "transparent",
-                  }}
-                  onClick={closeAll}
-                />
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={closeAll} />
                 <motion.div
                   className="sp-panel"
                   initial={{ opacity: 0, y: 6, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.13 }}
-                  style={{
-                    /* On mobile: fixed to viewport, on desktop: absolute */
-                    position: "fixed",
-                    top: 58,
-                    right: 8,
-                    left: 8,
-                    zIndex: 50,
-                    maxWidth: 360,
-                    marginLeft: "auto",
-                  }}
+                  style={{ width: "min(310px, calc(100vw - 16px))" }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 10px", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "2px 4px 10px", borderBottom: "1px solid var(--border)", marginBottom: 4,
+                  }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Notifications</span>
                     <span style={{
                       fontSize: 10, padding: "2px 7px", borderRadius: 999, fontWeight: 600,
@@ -310,29 +315,22 @@ export default function Navbar({
                       {NOTIFICATIONS.length} new
                     </span>
                   </div>
-                  <div style={{ paddingTop: 4 }}>
-                    {NOTIFICATIONS.map((n, i) => (
-                      <div key={i} className="sp-nrow">
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: n.color, flexShrink: 0, marginTop: 5 }} />
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.45, margin: 0 }}>{n.text}</p>
-                          <p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "3px 0 0" }}>{n.time}</p>
-                        </div>
+                  {NOTIFICATIONS.map((n, i) => (
+                    <div key={i} className="sp-nrow">
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: n.color, flexShrink: 0, marginTop: 5 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.45, margin: 0 }}>{n.text}</p>
+                        <p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "3px 0 0" }}>{n.time}</p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </motion.div>
               </>
             )}
           </AnimatePresence>
         </div>
 
-        <button className="sp-pro">
-          <Zap size={12} strokeWidth={2.5} style={{ stroke: "none", fill: "#8b7fff" }} />
-          Go Pro
-        </button>
-
-        {/* Avatar */}
+        {/* Avatar / Profile */}
         <div style={{ position: "relative" }}>
           <button className="sp-avatar-btn"
             onClick={() => { setProfileOpen(p => !p); setNotifOpen(false); }}
@@ -344,22 +342,16 @@ export default function Navbar({
           <AnimatePresence>
             {profileOpen && (
               <>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={closeAll}
-                />
-                <motion.div className="sp-panel"
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={closeAll} />
+                <motion.div
+                  className="sp-panel"
                   initial={{ opacity: 0, y: 6, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.13 }}
-                  style={{
-                    position: "fixed",
-                    top: 58,
-                    right: 8,
-                    zIndex: 50,
-                    width: 210,
-                  }}>
+                  style={{ width: 210 }}
+                >
+                  {/* User card */}
                   <div style={{
                     padding: "9px 10px", borderRadius: 10, marginBottom: 6,
                     background: "var(--bg-card)",
@@ -385,23 +377,20 @@ export default function Navbar({
 
                   <div className="sp-sep" />
 
-                  {[
-                    { label: "View Profile", id: "profile",  Icon: User     },
-                    { label: "Settings",     id: "settings", Icon: Settings },
-                  ].map(({ label, id, Icon }) => (
-                    <button key={id} className="sp-mitem"
-                      onClick={() => { onNavigate?.(id); closeAll(); }}>
-                      <Icon size={14} strokeWidth={1.8} />
-                      {label}
-                    </button>
-                  ))}
+                  <button className="sp-mitem" onClick={() => handleNav("profile")}>
+                    <User size={14} strokeWidth={1.8} /> View Profile
+                  </button>
+                  <button className="sp-mitem" onClick={() => handleNav("settings")}>
+                    <Settings size={14} strokeWidth={1.8} /> Settings
+                  </button>
 
                   <div className="sp-sep" />
 
-                  <button className="sp-mitem danger">
-                    <LogOut size={14} strokeWidth={1.8} />
-                    Sign out
+                  {/* ✅ FIXED: onClick now calls handleSignOut */}
+                  <button className="sp-mitem danger" onClick={handleSignOut}>
+                    <LogOut size={14} strokeWidth={1.8} /> Sign out
                   </button>
+
                 </motion.div>
               </>
             )}

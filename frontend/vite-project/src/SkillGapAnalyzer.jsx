@@ -15,7 +15,6 @@ import Settings     from "./pages/Settings";
 
 import { useToast } from "./hooks/useToast";
 
-// Breakpoint: anything under 1024px = mobile/tablet (sidebar overlays)
 const DESKTOP_BP = 1024;
 
 function useBreakpoint() {
@@ -33,13 +32,12 @@ export default function SkillGapAnalyzer() {
   const [page,        setPage]        = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode,    setDarkMode]    = useState(true);
-  const [analysis,    setAnalysis]    = useState(null); // ← was DUMMY_ANALYSIS
+  const [analysis,    setAnalysis]    = useState(null);
   const [profile,     setProfile]     = useState({ name: "", email: "", role: "" });
 
   const isDesktop = useBreakpoint();
   const { toasts, addToast, dismissToast } = useToast();
 
-  // On desktop resize: auto-open sidebar; on mobile: close it
   useEffect(() => {
     setSidebarOpen(isDesktop);
   }, [isDesktop]);
@@ -50,6 +48,14 @@ export default function SkillGapAnalyzer() {
   }, [isDesktop]);
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  // ✅ Resets everything back to initial state on sign out
+  const handleSignOut = useCallback(() => {
+    setPage("dashboard");
+    setAnalysis(null);
+    setProfile({ name: "", email: "", role: "" });
+    setSidebarOpen(isDesktop);
+  }, [isDesktop]);
 
   return (
     <div
@@ -120,6 +126,8 @@ export default function SkillGapAnalyzer() {
 
         {/* ── Main column ── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+
+          {/* ✅ page and onSignOut now passed to Navbar */}
           <Navbar
             darkMode={darkMode}
             setDarkMode={setDarkMode}
@@ -128,6 +136,8 @@ export default function SkillGapAnalyzer() {
             profile={profile}
             onNavigate={navigate}
             isDesktop={isDesktop}
+            page={page}
+            onSignOut={handleSignOut}
           />
 
           <main
@@ -161,9 +171,7 @@ export default function SkillGapAnalyzer() {
         </div>
       </div>
 
-      {/* Bottom nav — mobile only */}
       {!isDesktop && <BottomNav page={page} setPage={navigate} />}
-
       <Toast toasts={toasts} dismiss={dismissToast} />
     </div>
   );
@@ -186,7 +194,6 @@ function GlobalStyles() {
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-      /* ── Dark theme (default) ── */
       :root {
         --bg-base:        #060608;
         --bg-surface:     #0d0d14;
@@ -212,7 +219,6 @@ function GlobalStyles() {
         --tap-min:        44px;
       }
 
-      /* ── Light theme ── */
       .light-mode {
         --bg-base:        #f3f4f8;
         --bg-surface:     #eaecf4;
@@ -229,31 +235,24 @@ function GlobalStyles() {
         --scrollbar:      rgba(0,0,0,0.10);
       }
 
-      /* Reset */
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100%; }
       body { background: var(--bg-base); overflow: hidden; }
 
-      /* Theme transitions */
       * { transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease; }
       button, a { transition: background-color 0.25s ease, border-color 0.25s ease,
         color 0.2s ease, transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease; }
 
-      /* Scrollbar */
       ::-webkit-scrollbar       { width: 3px; height: 3px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
 
-      /* Focus ring for keyboard nav */
       :focus-visible { outline: 2px solid var(--accent-indigo); outline-offset: 2px; border-radius: 8px; }
 
-      /* Mobile UX */
       button { -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation; }
 
-      /* Prevent iOS zoom on input focus */
       input, textarea, select { font-size: max(16px, 1em) !important; }
 
-      /* Gradient text utility */
       .grad-text {
         background: linear-gradient(135deg, #4f8ef7 0%, #a855f7 100%);
         -webkit-background-clip: text;
@@ -261,7 +260,6 @@ function GlobalStyles() {
         background-clip: text;
       }
 
-      /* Light mode sidebar / navbar overrides */
       .light-mode aside  { background: var(--bg-sidebar) !important; }
       .light-mode header { background: var(--bg-navbar)  !important; }
     `}</style>
