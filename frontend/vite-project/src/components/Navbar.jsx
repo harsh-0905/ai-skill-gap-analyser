@@ -48,7 +48,7 @@ export default function Navbar({
           padding: 0 10px; gap: 6px;
           background: var(--bg-navbar);
           border-bottom: 1px solid var(--border);
-          position: sticky; top: 0; z-index: 30;
+          position: sticky; top: 0; z-index: 40;
           overflow: visible;
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
@@ -83,7 +83,7 @@ export default function Navbar({
           width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
           background: linear-gradient(135deg, #7c6fff 0%, #c084fc 100%);
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 0 14px rgba(124,111,255,0.4);
+          box-shadow: 0 0 14px rgba(124,111,255,0.3);
         }
 
         .sp-brand {
@@ -181,6 +181,7 @@ export default function Navbar({
           font-size: 10px; font-weight: 700; color: #fff;
         }
 
+        /* Panel — fixed position on mobile to avoid overflow */
         .sp-panel {
           position: absolute; z-index: 50;
           border-radius: 14px; padding: 8px;
@@ -262,44 +263,66 @@ export default function Navbar({
           {darkMode ? <Sun size={15} strokeWidth={2} /> : <Moon size={15} strokeWidth={2} />}
         </button>
 
+        {/* Bell — notification panel mobile-safe */}
         <div style={{ position: "relative" }}>
           <button className="sp-ibtn"
             onClick={() => { setNotifOpen(p => !p); setProfileOpen(false); }}
-            aria-label="Notifications" aria-expanded={notifOpen}>
+            aria-label="Notifications">
             <Bell size={15} strokeWidth={2} />
             <span className="sp-notif-dot" />
           </button>
 
           <AnimatePresence>
             {notifOpen && (
-              <motion.div className="sp-panel"
-                initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                transition={{ duration: 0.13 }}
-                style={{ width: "min(310px, calc(100vw - 20px))", right: 0, top: 42 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 10px", borderBottom: "1px solid var(--border)" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Notifications</span>
-                  <span style={{
-                    fontSize: 10, padding: "2px 7px", borderRadius: 999, fontWeight: 600,
-                    background: "rgba(124,111,255,0.12)", color: "#8b7fff",
-                    border: "1px solid rgba(124,111,255,0.25)",
-                  }}>
-                    {NOTIFICATIONS.length} new
-                  </span>
-                </div>
-                <div style={{ paddingTop: 4 }}>
-                  {NOTIFICATIONS.map((n, i) => (
-                    <div key={i} className="sp-nrow">
-                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: n.color, flexShrink: 0, marginTop: 5 }} />
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.45, margin: 0 }}>{n.text}</p>
-                        <p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "3px 0 0" }}>{n.time}</p>
+              <>
+                {/* Backdrop for mobile */}
+                <div
+                  style={{
+                    position: "fixed", inset: 0, zIndex: 40,
+                    background: "transparent",
+                  }}
+                  onClick={closeAll}
+                />
+                <motion.div
+                  className="sp-panel"
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.13 }}
+                  style={{
+                    /* On mobile: fixed to viewport, on desktop: absolute */
+                    position: "fixed",
+                    top: 58,
+                    right: 8,
+                    left: 8,
+                    zIndex: 50,
+                    maxWidth: 360,
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 10px", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Notifications</span>
+                    <span style={{
+                      fontSize: 10, padding: "2px 7px", borderRadius: 999, fontWeight: 600,
+                      background: "rgba(124,111,255,0.12)", color: "#8b7fff",
+                      border: "1px solid rgba(124,111,255,0.25)",
+                    }}>
+                      {NOTIFICATIONS.length} new
+                    </span>
+                  </div>
+                  <div style={{ paddingTop: 4 }}>
+                    {NOTIFICATIONS.map((n, i) => (
+                      <div key={i} className="sp-nrow">
+                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: n.color, flexShrink: 0, marginTop: 5 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.45, margin: 0 }}>{n.text}</p>
+                          <p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "3px 0 0" }}>{n.time}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
@@ -309,65 +332,78 @@ export default function Navbar({
           Go Pro
         </button>
 
+        {/* Avatar */}
         <div style={{ position: "relative" }}>
           <button className="sp-avatar-btn"
             onClick={() => { setProfileOpen(p => !p); setNotifOpen(false); }}
-            aria-label="Profile" aria-expanded={profileOpen}>
+            aria-label="Profile">
             <div className="sp-avatar-circle">{initials}</div>
             <ChevronDown size={10} strokeWidth={2.5} color="var(--text-muted)" />
           </button>
 
           <AnimatePresence>
             {profileOpen && (
-              <motion.div className="sp-panel"
-                initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                transition={{ duration: 0.13 }}
-                style={{ width: 210, right: 0, top: 42 }}>
-                <div style={{
-                  padding: "9px 10px", borderRadius: 10, marginBottom: 6,
-                  background: "var(--bg-card)",
-                  display: "flex", alignItems: "center", gap: 10,
-                }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                    background: "linear-gradient(135deg, #7c6fff, #ec4899)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 12, fontWeight: 700, color: "#fff",
+              <>
+                <div
+                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                  onClick={closeAll}
+                />
+                <motion.div className="sp-panel"
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.13 }}
+                  style={{
+                    position: "fixed",
+                    top: 58,
+                    right: 8,
+                    zIndex: 50,
+                    width: 210,
                   }}>
-                    {initials}
+                  <div style={{
+                    padding: "9px 10px", borderRadius: 10, marginBottom: 6,
+                    background: "var(--bg-card)",
+                    display: "flex", alignItems: "center", gap: 10,
+                  }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                      background: "linear-gradient(135deg, #7c6fff, #ec4899)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 12, fontWeight: 700, color: "#fff",
+                    }}>
+                      {initials}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+                        {profile?.name || "Your Name"}
+                      </p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "2px 0 0" }}>
+                        {profile?.email || "—"}
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
-                      {profile?.name || "Your Name"}
-                    </p>
-                    <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "2px 0 0" }}>
-                      {profile?.email || "—"}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="sp-sep" />
+                  <div className="sp-sep" />
 
-                {[
-                  { label: "View Profile", id: "profile",  Icon: User     },
-                  { label: "Settings",     id: "settings", Icon: Settings },
-                ].map(({ label, id, Icon }) => (
-                  <button key={id} className="sp-mitem"
-                    onClick={() => { onNavigate?.(id); closeAll(); }}>
-                    <Icon size={14} strokeWidth={1.8} />
-                    {label}
+                  {[
+                    { label: "View Profile", id: "profile",  Icon: User     },
+                    { label: "Settings",     id: "settings", Icon: Settings },
+                  ].map(({ label, id, Icon }) => (
+                    <button key={id} className="sp-mitem"
+                      onClick={() => { onNavigate?.(id); closeAll(); }}>
+                      <Icon size={14} strokeWidth={1.8} />
+                      {label}
+                    </button>
+                  ))}
+
+                  <div className="sp-sep" />
+
+                  <button className="sp-mitem danger">
+                    <LogOut size={14} strokeWidth={1.8} />
+                    Sign out
                   </button>
-                ))}
-
-                <div className="sp-sep" />
-
-                <button className="sp-mitem danger">
-                  <LogOut size={14} strokeWidth={1.8} />
-                  Sign out
-                </button>
-              </motion.div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
