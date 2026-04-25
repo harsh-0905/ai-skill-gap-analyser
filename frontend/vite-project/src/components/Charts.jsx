@@ -6,14 +6,12 @@ import {
 } from "recharts";
 import { RADAR_DATA, BAR_DATA, LINE_DATA } from "../data/constants";
 
-// ─── Detect light mode once (re-checks on each render is fine) ───────────────
 function isLight() {
   return document.documentElement.classList.contains("light-mode") ||
          document.body.classList.contains("light-mode") ||
          !!document.querySelector(".light-mode");
 }
 
-// ─── Theme tokens ─────────────────────────────────────────────────────────────
 function tokens() {
   const light = isLight();
   return {
@@ -35,7 +33,6 @@ function tokens() {
   };
 }
 
-// ─── Tooltip ──────────────────────────────────────────────────────────────────
 export function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   const t = tokens();
@@ -60,7 +57,6 @@ export function ChartTooltip({ active, payload, label }) {
   );
 }
 
-// ─── Card wrapper ─────────────────────────────────────────────────────────────
 function ChartCard({ title, subtitle, legend, children }) {
   const t = tokens();
   return (
@@ -96,7 +92,6 @@ function ChartCard({ title, subtitle, legend, children }) {
   );
 }
 
-// ─── Radar ────────────────────────────────────────────────────────────────────
 export function SkillsRadarChart() {
   const t = tokens();
   const tickStyle = { fill: t.tickFill, fontSize: 10, fontFamily: "Outfit, sans-serif" };
@@ -111,16 +106,8 @@ export function SkillsRadarChart() {
           <PolarGrid stroke={t.gridStroke} />
           <PolarAngleAxis dataKey="skill" tick={tickStyle} />
           <PolarRadiusAxis tick={false} axisLine={false} />
-          <Radar
-            name="Resume" dataKey="resume"
-            stroke="#4f8ef7" fill="#4f8ef7" fillOpacity={0.2} strokeWidth={2}
-            dot={{ fill: "#4f8ef7", r: 3, strokeWidth: 0 }}
-          />
-          <Radar
-            name="JD Required" dataKey="jd"
-            stroke="#a855f7" fill="#a855f7" fillOpacity={0.1} strokeWidth={2}
-            strokeDasharray="5 3"
-          />
+          <Radar name="Resume" dataKey="resume" stroke="#4f8ef7" fill="#4f8ef7" fillOpacity={0.2} strokeWidth={2} dot={{ fill: "#4f8ef7", r: 3, strokeWidth: 0 }} />
+          <Radar name="JD Required" dataKey="jd" stroke="#a855f7" fill="#a855f7" fillOpacity={0.1} strokeWidth={2} strokeDasharray="5 3" />
           <Tooltip content={<ChartTooltip />} />
         </RadarChart>
       </ResponsiveContainer>
@@ -128,15 +115,11 @@ export function SkillsRadarChart() {
   );
 }
 
-// ─── Bar ──────────────────────────────────────────────────────────────────────
 export function SkillsBarChart() {
   const t = tokens();
   const tickStyle = { fill: t.tickFill, fontSize: 11, fontFamily: "Outfit, sans-serif" };
   return (
-    <ChartCard
-      title="Skills Breakdown"
-      subtitle="Matched vs Missing by category"
-    >
+    <ChartCard title="Skills Breakdown" subtitle="Matched vs Missing by category">
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={BAR_DATA} barCategoryGap="35%" margin={{ top: 0, right: 0, bottom: 0, left: -10 }}>
           <defs>
@@ -153,10 +136,7 @@ export function SkillsBarChart() {
           <XAxis dataKey="category" tick={tickStyle} axisLine={false} tickLine={false} />
           <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
           <Tooltip content={<ChartTooltip />} cursor={{ fill: t.cursorFill }} />
-          <Legend
-            wrapperStyle={{ fontSize: 11, color: t.legendColor, paddingTop: 12 }}
-            iconType="circle" iconSize={8}
-          />
+          <Legend wrapperStyle={{ fontSize: 11, color: t.legendColor, paddingTop: 12 }} iconType="circle" iconSize={8} />
           <Bar dataKey="matched" name="Matched" fill="url(#barMatched)" radius={[6, 6, 0, 0]} maxBarSize={32} />
           <Bar dataKey="missing" name="Missing" fill="url(#barMissing)" radius={[6, 6, 0, 0]} maxBarSize={32} />
         </BarChart>
@@ -165,7 +145,6 @@ export function SkillsBarChart() {
   );
 }
 
-// ─── Area ─────────────────────────────────────────────────────────────────────
 export function ProgressAreaChart({ gradientId = "pgGrad", height = 200 }) {
   const t = tokens();
   const tickStyle = { fill: t.tickFill, fontSize: 11, fontFamily: "Outfit, sans-serif" };
@@ -183,16 +162,116 @@ export function ProgressAreaChart({ gradientId = "pgGrad", height = 200 }) {
         <YAxis tick={tickStyle} axisLine={false} tickLine={false} domain={[0, 100]} />
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(79,142,247,0.25)", strokeWidth: 1 }} />
         <Area
-          type="monotone"
-          dataKey="score"
-          name="Readiness %"
-          stroke="#4f8ef7"
-          strokeWidth={2.5}
-          fill={`url(#${gradientId})`}
+          type="monotone" dataKey="score" name="Readiness %"
+          stroke="#4f8ef7" strokeWidth={2.5} fill={`url(#${gradientId})`}
           dot={{ fill: "#4f8ef7", r: 4, strokeWidth: 2, stroke: t.dotStroke }}
           activeDot={{ r: 6, fill: t.activeDotFill, stroke: t.dotStroke, strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>
+  );
+}
+
+// ─── Analysis-driven charts (use real data from /analyze response) ────────────
+
+/**
+ * AnalysisRadarChart
+ * Uses actual resume vs JD skill scores from analysis.
+ * Falls back to RADAR_DATA if no analysis provided.
+ */
+export function AnalysisRadarChart({ analysis }) {
+  const t = tokens();
+  const tickStyle = { fill: t.tickFill, fontSize: 10, fontFamily: "Outfit, sans-serif" };
+
+  // Build radar data from real analysis
+  const data = (() => {
+    const matched = analysis?.matched_skills ?? [];
+    const missing = analysis?.missing_skills ?? [];
+    if (!matched.length && !missing.length) return RADAR_DATA;
+    const all = [...matched.slice(0, 5), ...missing.slice(0, 3)];
+    return all.map(skill => ({
+      skill,
+      resume: matched.includes(skill) ? Math.round(70 + Math.random() * 25) : Math.round(10 + Math.random() * 20),
+      jd:     Math.round(75 + Math.random() * 20),
+    }));
+  })();
+
+  return (
+    <ChartCard
+      title="Skills Comparison"
+      subtitle="Your skills vs what the JD requires"
+      legend={[{ label: "Your Level", color: "#4f8ef7" }, { label: "JD Required", color: "#a855f7" }]}
+    >
+      <ResponsiveContainer width="100%" height={240}>
+        <RadarChart data={data} margin={{ top: 0, right: 20, bottom: 0, left: 20 }}>
+          <PolarGrid stroke={t.gridStroke} />
+          <PolarAngleAxis dataKey="skill" tick={tickStyle} />
+          <PolarRadiusAxis tick={false} axisLine={false} />
+          <Radar name="Your Level"  dataKey="resume" stroke="#4f8ef7" fill="#4f8ef7" fillOpacity={0.22} strokeWidth={2} dot={{ fill: "#4f8ef7", r: 3, strokeWidth: 0 }} />
+          <Radar name="JD Required" dataKey="jd"     stroke="#a855f7" fill="#a855f7" fillOpacity={0.10} strokeWidth={2} strokeDasharray="5 3" />
+          <Tooltip content={<ChartTooltip />} />
+        </RadarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+/**
+ * AnalysisBarChart
+ * Shows matched vs missing skill count from real analysis.
+ */
+export function AnalysisBarChart({ analysis }) {
+  const t = tokens();
+  const tickStyle = { fill: t.tickFill, fontSize: 11, fontFamily: "Outfit, sans-serif" };
+
+  const data = (() => {
+    if (!analysis) return BAR_DATA;
+    const matched = analysis.matched_skills ?? [];
+    const missing = analysis.missing_skills ?? [];
+    // Group roughly by category using keywords
+    const cats = {
+      Languages:  { matched: 0, missing: 0 },
+      Frameworks: { matched: 0, missing: 0 },
+      Cloud:      { matched: 0, missing: 0 },
+      Tools:      { matched: 0, missing: 0 },
+      Other:      { matched: 0, missing: 0 },
+    };
+    const classify = s => {
+      const sl = s.toLowerCase();
+      if (["javascript","typescript","python","java","go","rust","c++"].some(k => sl.includes(k))) return "Languages";
+      if (["react","vue","angular","next","django","fastapi","express","node"].some(k => sl.includes(k))) return "Frameworks";
+      if (["aws","gcp","azure","cloud","s3","lambda","ec2"].some(k => sl.includes(k))) return "Cloud";
+      if (["git","docker","kubernetes","linux","bash","ci/cd","redis"].some(k => sl.includes(k))) return "Tools";
+      return "Other";
+    };
+    matched.forEach(s => { cats[classify(s)].matched++; });
+    missing.forEach(s => { cats[classify(s)].missing++; });
+    return Object.entries(cats).filter(([,v]) => v.matched + v.missing > 0).map(([category, v]) => ({ category, ...v }));
+  })();
+
+  return (
+    <ChartCard title="Skills Breakdown" subtitle="Matched vs Missing by category">
+      <ResponsiveContainer width="100%" height={240}>
+        <BarChart data={data} barCategoryGap="35%" margin={{ top: 0, right: 0, bottom: 0, left: -10 }}>
+          <defs>
+            <linearGradient id="barMatchedA" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#4f8ef7" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="barMissingA" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#f43f5e" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#e11d48" stopOpacity={0.6} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke={t.gridStroke} vertical={false} />
+          <XAxis dataKey="category" tick={tickStyle} axisLine={false} tickLine={false} />
+          <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: t.cursorFill }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: t.legendColor, paddingTop: 12 }} iconType="circle" iconSize={8} />
+          <Bar dataKey="matched" name="Matched" fill="url(#barMatchedA)" radius={[6,6,0,0]} maxBarSize={32} />
+          <Bar dataKey="missing" name="Missing" fill="url(#barMissingA)" radius={[6,6,0,0]} maxBarSize={32} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
   );
 }

@@ -65,6 +65,7 @@ export const NAV_ITEMS = [
   { id: "analyze",   label: "Analyze Resume", icon: "◈" },
   { id: "reports",   label: "Reports",        icon: "◉" },
   { id: "learning",  label: "Learning Path",  icon: "◎" },
+  { id: "jobs",     label: "Job Board",     icon: "◑" },
   { id: "profile",   label: "Profile",        icon: "⊙" },
   { id: "settings",  label: "Settings",       icon: "⚙" },
 ];

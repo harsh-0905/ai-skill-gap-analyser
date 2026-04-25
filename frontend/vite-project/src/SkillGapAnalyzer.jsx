@@ -10,6 +10,7 @@ import Dashboard    from "./pages/Dashboard";
 import Analyze      from "./pages/Analyze";
 import Reports      from "./pages/Reports";
 import LearningPath from "./pages/LearningPath";
+import Jobs         from "./pages/Jobs";
 import Profile      from "./pages/Profile";
 import Settings     from "./pages/Settings";
 
@@ -28,12 +29,34 @@ function useBreakpoint() {
   return isDesktop;
 }
 
+// ── localStorage helpers ──────────────────────────────────────────────────────
+const PROFILE_KEY = "sgp_profile";
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return { name: "", email: "", role: "" };
+}
+
+function persistProfile(data) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch (_) {}
+}
+
+function clearProfile() {
+  try { localStorage.removeItem(PROFILE_KEY); } catch (_) {}
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function SkillGapAnalyzer() {
   const [page,        setPage]        = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode,    setDarkMode]    = useState(true);
   const [analysis,    setAnalysis]    = useState(null);
-  const [profile,     setProfile]     = useState({ name: "", email: "", role: "" });
+
+  // ── FIX 1: init profile from localStorage so name persists across refreshes ──
+  const [profile, setProfile] = useState(loadProfile);
 
   const isDesktop = useBreakpoint();
   const { toasts, addToast, dismissToast } = useToast();
@@ -49,13 +72,19 @@ export default function SkillGapAnalyzer() {
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
-  // ✅ Resets everything back to initial state on sign out
+  // ── FIX 2: persist profile to localStorage on every save ────────────────────
+  const saveProfile = useCallback((data) => {
+    setProfile(data);
+    persistProfile(data);
+  }, []);
+
+  // ── FIX 3: sign out — clear state + localStorage + return to dashboard ───────
   const handleSignOut = useCallback(() => {
-    setPage("dashboard");
-    setAnalysis(null);
     setProfile({ name: "", email: "", role: "" });
-    setSidebarOpen(isDesktop);
-  }, [isDesktop]);
+    setAnalysis(null);
+    setPage("dashboard");
+    clearProfile();
+  }, []);
 
   return (
     <div
@@ -74,7 +103,6 @@ export default function SkillGapAnalyzer() {
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative" }}>
 
-        {/* ── Sidebar ── */}
         {isDesktop ? (
           <Sidebar
             open={sidebarOpen}
@@ -124,10 +152,9 @@ export default function SkillGapAnalyzer() {
           </AnimatePresence>
         )}
 
-        {/* ── Main column ── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
 
-          {/* ✅ page and onSignOut now passed to Navbar */}
+          {/* ── FIX 4: pass page + onSignOut — both were missing before ── */}
           <Navbar
             darkMode={darkMode}
             setDarkMode={setDarkMode}
@@ -162,7 +189,7 @@ export default function SkillGapAnalyzer() {
                   setAnalysis={setAnalysis}
                   addToast={addToast}
                   profile={profile}
-                  setProfile={setProfile}
+                  setProfile={saveProfile}   // ← uses saveProfile so localStorage stays in sync
                   onNavigate={navigate}
                 />
               </motion.div>
@@ -179,13 +206,14 @@ export default function SkillGapAnalyzer() {
 
 function PageRouter({ page, analysis, setAnalysis, addToast, profile, setProfile, onNavigate }) {
   switch (page) {
-    case "dashboard": return <Dashboard    analysis={analysis} loading={false} onNavigate={onNavigate} />;
+    case "dashboard": return <Dashboard    analysis={analysis}  loading={false} onNavigate={onNavigate} />;
     case "analyze":   return <Analyze      onAnalysis={setAnalysis} addToast={addToast} />;
     case "reports":   return <Reports      analysis={analysis} />;
     case "learning":  return <LearningPath analysis={analysis} onNavigate={onNavigate} />;
     case "profile":   return <Profile      profile={profile} onProfileSave={setProfile} analysis={analysis} addToast={addToast} />;
+    case "jobs":      return <Jobs         analysis={analysis} />;
     case "settings":  return <Settings     profile={profile} onProfileSave={setProfile} addToast={addToast} />;
-    default:          return <Dashboard    analysis={analysis} loading={false} onNavigate={onNavigate} />;
+    default:          return <Dashboard    analysis={analysis}  loading={false} onNavigate={onNavigate} />;
   }
 }
 
@@ -194,6 +222,7 @@ function GlobalStyles() {
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+      /* ── Dark theme (default) ── */
       :root {
         --bg-base:        #060608;
         --bg-surface:     #0d0d14;
@@ -217,51 +246,125 @@ function GlobalStyles() {
         --font-body:      'Outfit', sans-serif;
         --font-mono:      'JetBrains Mono', monospace;
         --tap-min:        44px;
+
+        --card-bg:        rgba(255,255,255,0.04);
+        --card-border:    rgba(255,255,255,0.08);
+        --hero-bg:        linear-gradient(135deg, rgba(79,142,247,0.13) 0%, rgba(99,102,241,0.09) 50%, rgba(168,85,247,0.07) 100%);
+        --hero-border:    rgba(255,255,255,0.10);
+        --tip-bg:         rgba(0,0,0,0.18);
+        --tip-border:     rgba(255,255,255,0.06);
+        --tip-text:       rgba(200,200,220,0.50);
+        --job-card-bg:    rgba(255,255,255,0.04);
+        --job-card-border:rgba(255,255,255,0.08);
+        --tag-bg:         rgba(255,255,255,0.06);
+        --tag-color:      rgba(200,200,220,0.55);
+        --empty-icon-bg:  rgba(79,142,247,0.10);
+        --skeleton-base:  rgba(255,255,255,0.04);
+        --skeleton-shine: rgba(255,255,255,0.07);
       }
 
+      /* ── Light / Warm theme ── */
       .light-mode {
-        --bg-base:        #f3f4f8;
-        --bg-surface:     #eaecf4;
+        --bg-base:        #faf7f2;
+        --bg-surface:     #f4f0e8;
         --bg-elevated:    #ffffff;
-        --bg-card:        rgba(255,255,255,0.88);
+        --bg-card:        rgba(255,255,255,0.92);
         --bg-sidebar:     #ffffff;
-        --bg-navbar:      rgba(243,244,248,0.92);
-        --bg-bottom-nav:  rgba(248,249,252,0.98);
-        --border:         rgba(0,0,0,0.08);
-        --border-strong:  rgba(0,0,0,0.14);
-        --text-primary:   #0f1117;
-        --text-secondary: rgba(20,20,50,0.60);
-        --text-muted:     rgba(20,20,50,0.36);
-        --scrollbar:      rgba(0,0,0,0.10);
+        --bg-navbar:      rgba(250,247,242,0.94);
+        --bg-bottom-nav:  rgba(255,253,248,0.98);
+        --border:         rgba(180,160,120,0.18);
+        --border-strong:  rgba(140,110,70,0.22);
+        --text-primary:   #1c1409;
+        --text-secondary: rgba(60,40,15,0.62);
+        --text-muted:     rgba(60,40,15,0.38);
+        --scrollbar:      rgba(140,110,70,0.18);
+        --accent-blue:    #2563eb;
+        --accent-purple:  #9333ea;
+        --accent-indigo:  #4f46e5;
+        --accent-emerald: #059669;
+        --accent-rose:    #e11d48;
+        --accent-amber:   #d97706;
+        --card-bg:        rgba(255,255,255,0.80);
+        --card-border:    rgba(180,150,100,0.18);
+        --hero-bg:        linear-gradient(135deg, rgba(251,191,36,0.10) 0%, rgba(245,158,11,0.07) 50%, rgba(217,119,6,0.05) 100%);
+        --hero-border:    rgba(217,119,6,0.18);
+        --tip-bg:         rgba(254,243,199,0.70);
+        --tip-border:     rgba(217,119,6,0.15);
+        --tip-text:       rgba(120,70,10,0.70);
+        --job-card-bg:    rgba(255,255,255,0.85);
+        --job-card-border:rgba(180,150,100,0.18);
+        --tag-bg:         rgba(0,0,0,0.05);
+        --tag-color:      rgba(60,40,15,0.62);
+        --empty-icon-bg:  rgba(37,99,235,0.08);
+        --skeleton-base:  rgba(0,0,0,0.05);
+        --skeleton-shine: rgba(0,0,0,0.09);
       }
 
+      /* Reset */
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100%; }
       body { background: var(--bg-base); overflow: hidden; }
 
-      * { transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease; }
-      button, a { transition: background-color 0.25s ease, border-color 0.25s ease,
-        color 0.2s ease, transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease; }
+      /* Theme transitions */
+      *, *::before, *::after {
+        transition:
+          background-color 0.30s ease,
+          border-color     0.30s ease,
+          color            0.25s ease,
+          box-shadow       0.25s ease;
+      }
+      button, a {
+        transition:
+          background-color 0.30s ease,
+          border-color     0.30s ease,
+          color            0.25s ease,
+          transform        0.14s ease,
+          box-shadow       0.14s ease,
+          opacity          0.14s ease;
+      }
 
+      /* Scrollbar */
       ::-webkit-scrollbar       { width: 3px; height: 3px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
 
+      /* Focus */
       :focus-visible { outline: 2px solid var(--accent-indigo); outline-offset: 2px; border-radius: 8px; }
 
+      /* Mobile UX */
       button { -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation; }
 
+      /* Prevent iOS zoom */
       input, textarea, select { font-size: max(16px, 1em) !important; }
 
+      /* Gradient text utility */
       .grad-text {
-        background: linear-gradient(135deg, #4f8ef7 0%, #a855f7 100%);
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
 
-      .light-mode aside  { background: var(--bg-sidebar) !important; }
-      .light-mode header { background: var(--bg-navbar)  !important; }
+      /* Light mode structural overrides */
+      .light-mode aside  { background: var(--bg-sidebar) !important; border-right: 1px solid var(--border) !important; }
+      .light-mode header { background: var(--bg-navbar)  !important; border-bottom: 1px solid var(--border) !important; }
+
+      .light-mode .dash-kpi > div,
+      .light-mode .dash-charts > div {
+        background: var(--card-bg) !important;
+        border-color: var(--card-border) !important;
+      }
+
+      /* Shimmer animation */
+      @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position:  200% 0; }
+      }
+
+      /* Mobile responsive helpers */
+      @media (max-width: 400px) {
+        .dash-kpi { grid-template-columns: 1fr 1fr !important; }
+      }
     `}</style>
   );
 }

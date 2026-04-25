@@ -37,6 +37,105 @@ with open(os.path.join(BASE_DIR, "courses.json")) as f:
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 FRONTEND_URL   = os.getenv("FRONTEND_URL", "http://localhost:5173")
+ADZUNA_APP_ID  = os.getenv("ADZUNA_APP_ID", "")
+ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
+
+
+# ─────────────────────────────────────────────
+# Domain signal lists
+# Docker is intentionally excluded from DevOps —
+# it appears in Backend, AI/ML, and DevOps JDs equally.
+# ─────────────────────────────────────────────
+
+DEVOPS_SIGNALS = [
+    "kubernetes", "terraform", "jenkins", "ci/cd", "ansible",
+    "helm", "prometheus", "grafana", "infrastructure", "pipeline",
+    "gitlab", "argocd", "linux administration"
+]
+
+AIML_SIGNALS = [
+    "machine learning", "deep learning", "pytorch", "tensorflow",
+    "llm", "model training", "huggingface", "transformers",
+    "computer vision", "reinforcement learning", "scikit-learn",
+    "neural network", "dataset", "fine-tuning"
+]
+
+FRONTEND_SIGNALS = [
+    "react", "javascript", "vue", "angular", "css", "html",
+    "typescript", "next.js", "svelte", "tailwind", "redux",
+    "webpack", "ui", "ux", "figma"
+]
+
+BACKEND_SIGNALS = [
+    "fastapi", "django", "flask", "node.js", "express",
+    "postgresql", "rest api", "celery", "redis", "sqlalchemy",
+    "alembic", "pydantic", "async", "websocket", "graphql",
+    "microservices", "mongodb", "mysql", "api design", "spacy",
+    "nlp", "tfidf", "python"
+]
+
+
+def detect_domain(jd_skills: list[str]) -> str:
+    """
+    Score each domain based on how many of its signals
+    appear in the JD skills list. Return the domain with
+    the highest score. Falls back to 'General' if no
+    signals match at all.
+    """
+    jd_lower = [s.lower() for s in jd_skills]
+
+    scores = {
+        "DevOps":   0,
+        "AI/ML":    0,
+        "Frontend": 0,
+        "Backend":  0,
+    }
+
+    for skill in jd_lower:
+        if skill in DEVOPS_SIGNALS:   scores["DevOps"]   += 2
+        if skill in AIML_SIGNALS:     scores["AI/ML"]    += 2
+        if skill in FRONTEND_SIGNALS: scores["Frontend"] += 2
+        if skill in BACKEND_SIGNALS:  scores["Backend"]  += 2
+
+    best_domain = max(scores, key=scores.get)
+
+    # If nothing scored, return General
+    if scores[best_domain] == 0:
+        return "General"
+
+    return best_domain
+
+
+# ─────────────────────────────────────────────
+# Routes
+# ─────────────────────────────────────────────
+
+@app.get("/jobs")
+async def get_jobs(
+    what: str = "Software Developer",
+    where: str = "India",
+    page: int = 1,
+    results_per_page: int = 12
+):
+    if not ADZUNA_APP_ID or not ADZUNA_APP_KEY:
+        raise HTTPException(status_code=500, detail="Adzuna credentials not configured.")
+
+    url = (
+        f"https://api.adzuna.com/v1/api/jobs/in/search/{page}"
+        f"?app_id={ADZUNA_APP_ID}&app_key={ADZUNA_APP_KEY}"
+        f"&what={what}&where={where}"
+        f"&results_per_page={results_per_page}&sort_by=date"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/analyze")
@@ -64,13 +163,8 @@ async def analyze_resume(resume: UploadFile = File(...), jd: UploadFile = File(.
     result["recommendations"] = recommendations
     result["skills"]           = result["matched_skills"]
 
-    domain = "General"
-    jd_lower = [s.lower() for s in jd_skills]
-    if   "docker"           in jd_lower or "kubernetes"        in jd_lower: domain = "DevOps"
-    elif "machine learning" in jd_lower or "deep learning"     in jd_lower: domain = "AI/ML"
-    elif "react"            in jd_lower or "javascript"        in jd_lower: domain = "Frontend"
-    elif "django"           in jd_lower or "fastapi"           in jd_lower: domain = "Backend"
-
+    # ── Fixed domain detection ──
+    domain = detect_domain(jd_skills)
     result["job_domain"] = domain
 
     advice_map = {
@@ -83,6 +177,10 @@ async def analyze_resume(resume: UploadFile = File(...), jd: UploadFile = File(.
 
     return result
 
+
+# ─────────────────────────────────────────────
+# Email
+# ─────────────────────────────────────────────
 
 class SendPlanRequest(BaseModel):
     email:    str
