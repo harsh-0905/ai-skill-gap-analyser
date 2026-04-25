@@ -17,7 +17,12 @@ from analyser import analyse_gap
 
 app = FastAPI()
 
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+ALLOWED_ORIGINS = [
+    "https://ai-skill-gap-analyser.netlify.app",
+    "https://ai-skill-gap-analyser-weld.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
