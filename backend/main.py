@@ -41,7 +41,7 @@ with open(os.path.join(BASE_DIR, "all_skills.json")) as f:
 with open(os.path.join(BASE_DIR, "courses.json")) as f:
     COURSE_DB = json.load(f)
 
-SMTP_EMAIL    = os.getenv("SMTP_EMAIL", "")       # your Gmail address
+SMTP_EMAIL    = os.getenv("SMTP_EMAIL", "") or os.getenv("SMTP_USER", "")       # your Gmail address
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")    # Gmail App Password (16 chars)
 SMTP_NAME     = os.getenv("SMTP_NAME", "SkillGap AI")
 FRONTEND_URL   = os.getenv("FRONTEND_URL", "http://localhost:5173")
