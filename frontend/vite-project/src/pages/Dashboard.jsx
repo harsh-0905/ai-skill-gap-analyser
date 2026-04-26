@@ -477,7 +477,7 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
               ))}
             </div>
           </div>
-          <ProgressAreaChart gradientId="dashGradV3" height={180} />
+          <ProgressAreaChart gradientId="dashGradV3" height={180} analysis={analysis} />
         </motion.div>
 
         {/* ═══ JOBS ═══ */}

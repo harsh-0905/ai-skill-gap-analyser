@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Clock, BookOpen, ArrowRight, CheckCircle2, Flame } from "lucide-react";
 
 import RecommendationCard from "../components/RecommendationCard";
+import { GanttTimelineChart } from "../components/Charts";
 
 function parseWeeks(timeStr = "") {
   const str = timeStr.toLowerCase().trim();
@@ -130,6 +131,11 @@ export default function LearningPath({ analysis, onNavigate }) {
           ))}
         </div>
       </div>
+
+      {/* Gantt Timeline Chart */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <GanttTimelineChart analysis={analysis} />
+      </motion.div>
 
       {/* Timeline */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
