@@ -48,27 +48,29 @@ ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
 
 # ─────────────────────────────────────────────
 # Domain signal lists
-# Docker is intentionally excluded from DevOps —
-# it appears in Backend, AI/ML, and DevOps JDs equally.
 # ─────────────────────────────────────────────
 
 DEVOPS_SIGNALS = [
     "kubernetes", "terraform", "jenkins", "ci/cd", "ansible",
     "helm", "prometheus", "grafana", "infrastructure", "pipeline",
-    "gitlab", "argocd", "linux administration"
+    "gitlab", "argocd", "linux administration", "site reliability",
+    "sre", "nginx", "load balancer", "cloud infrastructure"
 ]
 
 AIML_SIGNALS = [
     "machine learning", "deep learning", "pytorch", "tensorflow",
     "llm", "model training", "huggingface", "transformers",
     "computer vision", "reinforcement learning", "scikit-learn",
-    "neural network", "dataset", "fine-tuning"
+    "neural network", "dataset", "fine-tuning", "generative ai",
+    "large language models", "prompt engineering", "mlops",
+    "retrieval augmented generation", "langchain", "vector db"
 ]
 
 FRONTEND_SIGNALS = [
     "react", "javascript", "vue", "angular", "css", "html",
     "typescript", "next.js", "svelte", "tailwind", "redux",
-    "webpack", "ui", "ux", "figma"
+    "webpack", "ui", "ux", "figma", "responsive design",
+    "sass", "nuxtjs", "framer motion", "storybook"
 ]
 
 BACKEND_SIGNALS = [
@@ -76,35 +78,109 @@ BACKEND_SIGNALS = [
     "postgresql", "rest api", "celery", "redis", "sqlalchemy",
     "alembic", "pydantic", "async", "websocket", "graphql",
     "microservices", "mongodb", "mysql", "api design", "spacy",
-    "nlp", "tfidf", "python"
+    "nlp", "tfidf", "python", "spring boot", "java", "go",
+    "grpc", "rabbitmq", "kafka", "serverless"
+]
+
+QA_SIGNALS = [
+    "selenium", "testing", "test cases", "manual testing", "automation testing",
+    "jira", "bug tracking", "defect", "stlc", "regression testing",
+    "functional testing", "integration testing", "uat", "testng", "junit",
+    "postman", "api testing", "cross-browser testing", "mobile testing",
+    "test plan", "test strategy", "quality assurance", "qa", "appium",
+    "cypress", "playwright", "test automation", "load testing",
+    "performance testing", "smoke testing", "sanity testing", "test report"
+]
+
+DATA_ENGINEERING_SIGNALS = [
+    "apache spark", "airflow", "kafka", "etl", "data pipeline",
+    "data warehouse", "snowflake", "databricks", "hadoop", "hive",
+    "data lake", "dbt", "bigquery", "redshift", "data engineering",
+    "batch processing", "stream processing", "data modeling",
+    "power bi", "tableau", "looker", "data orchestration"
+]
+
+CYBERSECURITY_SIGNALS = [
+    "penetration testing", "ethical hacking", "owasp", "siem",
+    "vulnerability", "cybersecurity", "network security", "firewalls",
+    "intrusion detection", "soc", "malware analysis", "kali linux",
+    "burp suite", "metasploit", "cve", "threat analysis", "incident response",
+    "security audit", "pki", "ssl", "zero trust", "devsecops"
+]
+
+CLOUD_SIGNALS = [
+    "aws", "azure", "google cloud", "gcp", "cloud architect",
+    "ec2", "s3", "lambda", "cloudformation", "cloud native",
+    "multi-cloud", "iaas", "paas", "saas", "cloud migration",
+    "cost optimization", "cloud security", "solutions architect"
+]
+
+MOBILE_SIGNALS = [
+    "android", "ios", "flutter", "react native", "kotlin", "swift",
+    "xcode", "android studio", "mobile app", "play store", "app store",
+    "mobile ui", "jetpack compose", "swiftui", "xamarin", "ionic",
+    "mobile testing", "push notifications", "firebase"
+]
+
+DATA_SCIENCE_SIGNALS = [
+    "pandas", "numpy", "matplotlib", "seaborn", "data analysis",
+    "statistics", "probability", "hypothesis testing", "regression",
+    "classification", "clustering", "data visualization", "jupyter",
+    "r programming", "scipy", "data science", "predictive modeling",
+    "a/b testing", "feature engineering", "eda"
+]
+
+BLOCKCHAIN_SIGNALS = [
+    "blockchain", "solidity", "smart contracts", "ethereum", "web3",
+    "defi", "nft", "cryptocurrency", "truffle", "hardhat",
+    "metamask", "ipfs", "consensus", "distributed ledger"
+]
+
+FULLSTACK_SIGNALS = [
+    "full stack", "fullstack", "mern", "mean", "full-stack developer",
+    "end to end", "frontend and backend", "react and node"
 ]
 
 
 def detect_domain(jd_skills: list[str]) -> str:
     """
-    Score each domain based on how many of its signals
-    appear in the JD skills list. Return the domain with
-    the highest score. Falls back to 'General' if no
-    signals match at all.
+    Score each domain based on signal matches in JD skills.
+    QA and specialised domains use weight=3 to avoid bleed from
+    shared skills like python/postman/java.
     """
     jd_lower = [s.lower() for s in jd_skills]
 
     scores = {
-        "DevOps":   0,
-        "AI/ML":    0,
-        "Frontend": 0,
-        "Backend":  0,
+        "DevOps":           0,
+        "AI/ML":            0,
+        "Frontend":         0,
+        "Backend":          0,
+        "QA/Testing":       0,
+        "Data Engineering": 0,
+        "Cybersecurity":    0,
+        "Cloud":            0,
+        "Mobile":           0,
+        "Data Science":     0,
+        "Blockchain":       0,
+        "Full Stack":       0,
     }
 
     for skill in jd_lower:
-        if skill in DEVOPS_SIGNALS:   scores["DevOps"]   += 2
-        if skill in AIML_SIGNALS:     scores["AI/ML"]    += 2
-        if skill in FRONTEND_SIGNALS: scores["Frontend"] += 2
-        if skill in BACKEND_SIGNALS:  scores["Backend"]  += 2
+        if skill in DEVOPS_SIGNALS:           scores["DevOps"]           += 2
+        if skill in AIML_SIGNALS:             scores["AI/ML"]            += 2
+        if skill in FRONTEND_SIGNALS:         scores["Frontend"]         += 2
+        if skill in BACKEND_SIGNALS:          scores["Backend"]          += 2
+        if skill in QA_SIGNALS:               scores["QA/Testing"]       += 3
+        if skill in DATA_ENGINEERING_SIGNALS: scores["Data Engineering"] += 3
+        if skill in CYBERSECURITY_SIGNALS:    scores["Cybersecurity"]    += 3
+        if skill in CLOUD_SIGNALS:            scores["Cloud"]            += 3
+        if skill in MOBILE_SIGNALS:           scores["Mobile"]           += 3
+        if skill in DATA_SCIENCE_SIGNALS:     scores["Data Science"]     += 2
+        if skill in BLOCKCHAIN_SIGNALS:       scores["Blockchain"]       += 3
+        if skill in FULLSTACK_SIGNALS:        scores["Full Stack"]       += 3
 
     best_domain = max(scores, key=scores.get)
 
-    # If nothing scored, return General
     if scores[best_domain] == 0:
         return "General"
 
@@ -168,17 +244,24 @@ async def analyze_resume(resume: UploadFile = File(...), jd: UploadFile = File(.
     result["recommendations"] = recommendations
     result["skills"]           = result["matched_skills"]
 
-    # ── Fixed domain detection ──
     domain = detect_domain(jd_skills)
     result["job_domain"] = domain
 
     advice_map = {
-        "Frontend": "Focus on React, JavaScript, performance optimization, and frontend deployments.",
-        "Backend":  "Improve API design, databases, authentication, and system design.",
-        "DevOps":   "Learn Docker → CI/CD → Kubernetes → Cloud and build deployment projects.",
-        "AI/ML":    "Strengthen Python, ML algorithms, deep learning, and real-world model deployment.",
+        "Frontend":         "Focus on React, JavaScript, performance optimization, and frontend deployments.",
+        "Backend":          "Improve API design, databases, authentication, and system design.",
+        "DevOps":           "Learn Docker → CI/CD → Kubernetes → Cloud and build deployment projects.",
+        "AI/ML":            "Strengthen Python, ML algorithms, deep learning, and real-world model deployment.",
+        "QA/Testing":       "Master Selenium WebDriver, write strong test cases, learn API testing with Postman, and explore CI integration with Jenkins.",
+        "Data Engineering": "Learn Apache Spark, Airflow, dbt, and build end-to-end data pipelines on cloud platforms.",
+        "Cybersecurity":    "Study OWASP Top 10, practice on HackTheBox/TryHackMe, and earn CEH or CompTIA Security+ certification.",
+        "Cloud":            "Earn AWS/Azure/GCP certification, build cloud-native projects, and learn infrastructure-as-code with Terraform.",
+        "Mobile":           "Build real apps on Android/iOS, publish to Play Store or App Store, and learn Flutter for cross-platform development.",
+        "Data Science":     "Strengthen statistics, practice on Kaggle, build end-to-end ML projects, and learn data storytelling with visualization tools.",
+        "Blockchain":       "Learn Solidity, deploy smart contracts on Ethereum testnets, and build a DeFi or NFT project.",
+        "Full Stack":       "Build complete projects with a frontend framework + backend API + database, and deploy them to production.",
     }
-    result["career_advice"] = advice_map.get(domain, "Build projects and strengthen core skills.")
+    result["career_advice"] = advice_map.get(domain, "Build projects, strengthen core CS fundamentals, and keep learning.")
 
     return result
 

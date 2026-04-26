@@ -51,11 +51,61 @@ const STATIC_JOBS = {
     { id: "m1", title: "AI/ML Intern",    company: "Ola Krutrim", location: "Bangalore", url: "https://krutrim.ai/careers",    tags: ["Python", "ML", "NLP"],           level: "intern" },
     { id: "m2", title: "ML Engineer",     company: "Sarvam AI",   location: "Bangalore", url: "https://sarvam.ai/careers",    tags: ["PyTorch", "LLMs", "Python"],     level: "mid"    },
     { id: "m3", title: "Data Scientist",  company: "Swiggy",      location: "Bangalore", url: "https://careers.swiggy.com",   tags: ["Python", "Pandas", "Sklearn"],   level: "mid"    },
+    { id: "m4", title: "AI Research Engineer", company: "Google DeepMind", location: "Bangalore", url: "https://deepmind.google/careers", tags: ["PyTorch", "Research", "LLMs"], level: "senior" },
   ],
   DevOps: [
     { id: "d1", title: "DevOps Intern",    company: "Razorpay", location: "Bangalore", url: "https://razorpay.com/jobs",    tags: ["Linux", "Docker", "CI/CD"],        level: "intern" },
     { id: "d2", title: "DevOps Engineer",  company: "Infosys",  location: "Pune",      url: "https://infosys.com/careers",  tags: ["Kubernetes", "Terraform", "AWS"],  level: "mid"    },
     { id: "d3", title: "Cloud Engineer",   company: "Wipro",    location: "Bangalore", url: "https://wipro.com/careers",    tags: ["AWS", "Terraform", "Linux"],       level: "senior" },
+    { id: "d4", title: "SRE Engineer",     company: "Google",   location: "Bangalore", url: "https://careers.google.com",   tags: ["Kubernetes", "SLO", "Monitoring"], level: "senior" },
+  ],
+  "QA/Testing": [
+    { id: "q1", title: "QA Intern",             company: "Newgen Software", location: "Noida",    url: "https://newgensoft.com/company/careers/", tags: ["Selenium", "JIRA", "Manual Testing"], level: "intern" },
+    { id: "q2", title: "Software Test Engineer", company: "Wipro",          location: "Pan India", url: "https://wipro.com/careers",               tags: ["Selenium", "Java", "TestNG"],         level: "junior" },
+    { id: "q3", title: "QA Automation Engineer", company: "Infosys",        location: "Bangalore", url: "https://infosys.com/careers",             tags: ["Selenium", "Postman", "CI/CD"],       level: "mid"    },
+    { id: "q4", title: "Senior QA Engineer",     company: "HCLTech",        location: "Pan India", url: "https://hcltech.com/careers",             tags: ["Cypress", "Playwright", "API Testing"],level: "senior" },
+  ],
+  "Data Engineering": [
+    { id: "de1", title: "Data Engineering Intern", company: "Flipkart",  location: "Bangalore", url: "https://flipkartcareers.com",      tags: ["Python", "SQL", "Spark"],           level: "intern" },
+    { id: "de2", title: "Data Engineer",           company: "Swiggy",    location: "Bangalore", url: "https://careers.swiggy.com",       tags: ["Spark", "Airflow", "BigQuery"],     level: "mid"    },
+    { id: "de3", title: "Senior Data Engineer",    company: "Zomato",    location: "Gurugram",  url: "https://www.zomato.com/careers",   tags: ["Kafka", "dbt", "Databricks"],       level: "senior" },
+    { id: "de4", title: "Analytics Engineer",      company: "Freshworks", location: "Chennai",  url: "https://freshworks.com/jobs",      tags: ["dbt", "Snowflake", "SQL"],          level: "mid"    },
+  ],
+  Cybersecurity: [
+    { id: "cs1", title: "Security Analyst Intern",       company: "HCLTech",   location: "Pan India", url: "https://hcltech.com/careers",         tags: ["SIEM", "Network Security", "Linux"],       level: "intern" },
+    { id: "cs2", title: "Cybersecurity Analyst",         company: "Wipro",     location: "Bangalore", url: "https://wipro.com/careers",            tags: ["OWASP", "Vulnerability", "SOC"],           level: "junior" },
+    { id: "cs3", title: "Penetration Tester",            company: "Tata Elxsi",location: "Bangalore", url: "https://tataelxsi.com/careers",        tags: ["Kali Linux", "Burp Suite", "Metasploit"], level: "mid"    },
+    { id: "cs4", title: "Senior Security Engineer",      company: "Razorpay",  location: "Bangalore", url: "https://razorpay.com/jobs",            tags: ["DevSecOps", "Zero Trust", "PKI"],          level: "senior" },
+  ],
+  Cloud: [
+    { id: "cl1", title: "Cloud Intern",                  company: "TCS",       location: "Pan India", url: "https://tcs.com/careers",              tags: ["AWS", "Linux", "Networking"],              level: "intern" },
+    { id: "cl2", title: "Cloud Engineer",                company: "Accenture", location: "Pan India", url: "https://accenture.com/in/careers",      tags: ["AWS", "Terraform", "Docker"],              level: "junior" },
+    { id: "cl3", title: "AWS Solutions Architect",       company: "Infosys",   location: "Bangalore", url: "https://infosys.com/careers",           tags: ["AWS", "CloudFormation", "S3"],             level: "mid"    },
+    { id: "cl4", title: "Senior Cloud Architect",        company: "Microsoft", location: "Hyderabad", url: "https://careers.microsoft.com",         tags: ["Azure", "Multi-Cloud", "Cost Optimization"],level: "senior" },
+  ],
+  Mobile: [
+    { id: "mb1", title: "Android Intern",                company: "Meesho",    location: "Bangalore", url: "https://meesho.io/jobs",               tags: ["Kotlin", "Android Studio", "Firebase"],    level: "intern" },
+    { id: "mb2", title: "Flutter Developer",             company: "PhonePe",   location: "Bangalore", url: "https://phonepe.com/jobs",              tags: ["Flutter", "Dart", "Firebase"],             level: "junior" },
+    { id: "mb3", title: "iOS Developer",                 company: "Swiggy",    location: "Bangalore", url: "https://careers.swiggy.com",            tags: ["Swift", "SwiftUI", "Xcode"],               level: "mid"    },
+    { id: "mb4", title: "Senior Mobile Engineer",        company: "Paytm",     location: "Noida",     url: "https://paytm.com/careers",             tags: ["React Native", "iOS", "Android"],          level: "senior" },
+  ],
+  "Data Science": [
+    { id: "ds1", title: "Data Science Intern",           company: "Ola",       location: "Bangalore", url: "https://ola.com/careers",              tags: ["Python", "Pandas", "Statistics"],          level: "intern" },
+    { id: "ds2", title: "Data Analyst",                  company: "Flipkart",  location: "Bangalore", url: "https://flipkartcareers.com",           tags: ["SQL", "Tableau", "Python"],                level: "junior" },
+    { id: "ds3", title: "Data Scientist",                company: "Zomato",    location: "Gurugram",  url: "https://www.zomato.com/careers",        tags: ["Scikit-learn", "A/B Testing", "Python"],   level: "mid"    },
+    { id: "ds4", title: "Senior Data Scientist",         company: "Google",    location: "Bangalore", url: "https://careers.google.com",            tags: ["ML", "Statistics", "BigQuery"],            level: "senior" },
+  ],
+  Blockchain: [
+    { id: "bc1", title: "Blockchain Intern",             company: "Polygon",   location: "Bangalore / Remote", url: "https://polygon.technology/careers", tags: ["Solidity", "Ethereum", "Web3.js"],    level: "intern" },
+    { id: "bc2", title: "Smart Contract Developer",      company: "CoinDCX",   location: "Bangalore", url: "https://coindcx.com/careers",           tags: ["Solidity", "Hardhat", "EVM"],              level: "junior" },
+    { id: "bc3", title: "Blockchain Engineer",           company: "WazirX",    location: "Mumbai",    url: "https://wazirx.com/careers",            tags: ["Web3", "DeFi", "Solidity"],                level: "mid"    },
+    { id: "bc4", title: "Senior Blockchain Architect",   company: "Infosys",   location: "Bangalore", url: "https://infosys.com/careers",           tags: ["Hyperledger", "Solidity", "Cloud"],        level: "senior" },
+  ],
+  "Full Stack": [
+    { id: "fs1", title: "Full Stack Intern",             company: "Razorpay",  location: "Bangalore", url: "https://razorpay.com/jobs",             tags: ["React", "Node.js", "MongoDB"],             level: "intern" },
+    { id: "fs2", title: "Full Stack Developer",          company: "Freshworks", location: "Chennai",  url: "https://freshworks.com/jobs",           tags: ["React", "Django", "PostgreSQL"],           level: "junior" },
+    { id: "fs3", title: "MERN Stack Developer",          company: "Meesho",    location: "Bangalore", url: "https://meesho.io/jobs",                tags: ["MongoDB", "Express", "React", "Node.js"],  level: "mid"    },
+    { id: "fs4", title: "Senior Full Stack Engineer",    company: "PhonePe",   location: "Bangalore", url: "https://phonepe.com/jobs",              tags: ["React", "Spring Boot", "AWS"],             level: "senior" },
   ],
   General: [
     { id: "g1", title: "SDE Intern",               company: "Ola",       location: "Bangalore", url: "https://ola.com/careers",           tags: ["DSA", "Java"],                level: "intern" },
@@ -220,14 +270,36 @@ export default function Dashboard({ analysis, loading, onNavigate }) {
   // Try Adzuna — fall back to static curated list if irrelevant
   useEffect(() => {
     if (!analysis?.job_domain) return;
-    const roleMap = { Frontend: "React Developer", Backend: "Node.js Developer", DevOps: "DevOps Engineer", "AI/ML": "Machine Learning Engineer", General: "Software Developer" };
+    const roleMap = {
+      Frontend:          "React Developer",
+      Backend:           "Node.js Developer",
+      DevOps:            "DevOps Engineer",
+      "AI/ML":           "Machine Learning Engineer",
+      "QA/Testing":      "QA Test Engineer",
+      "Data Engineering":"Data Engineer",
+      Cybersecurity:     "Cybersecurity Analyst",
+      Cloud:             "Cloud Solutions Architect",
+      Mobile:            "Mobile App Developer",
+      "Data Science":    "Data Scientist",
+      Blockchain:        "Blockchain Developer",
+      "Full Stack":      "Full Stack Developer",
+      General:           "Software Developer",
+    };
     const role = roleMap[analysis.job_domain] ?? "Software Developer";
     const domainKeywords = {
-      Frontend: ["react", "frontend", "javascript", "ui", "css", "vue", "angular"],
-      Backend:  ["backend", "node", "api", "server", "django", "fastapi", "express"],
-      "AI/ML":  ["machine learning", "ml engineer", "ai", "data science", "nlp", "pytorch"],
-      DevOps:   ["devops", "docker", "kubernetes", "ci/cd", "aws", "cloud", "terraform"],
-      General:  ["software", "developer", "engineer", "sde", "programmer"],
+      Frontend:           ["react", "frontend", "javascript", "ui", "css", "vue", "angular"],
+      Backend:            ["backend", "node", "api", "server", "django", "fastapi", "express"],
+      "AI/ML":            ["machine learning", "ml engineer", "ai", "data science", "nlp", "pytorch"],
+      DevOps:             ["devops", "docker", "kubernetes", "ci/cd", "aws", "cloud", "terraform"],
+      "QA/Testing":       ["qa", "test engineer", "selenium", "automation", "quality", "testing", "jira"],
+      "Data Engineering": ["data engineer", "spark", "airflow", "etl", "pipeline", "kafka", "databricks"],
+      Cybersecurity:      ["security", "cybersecurity", "penetration", "soc", "ethical hacking", "owasp"],
+      Cloud:              ["cloud", "aws", "azure", "gcp", "solutions architect", "cloud native"],
+      Mobile:             ["android", "ios", "flutter", "mobile", "kotlin", "swift", "react native"],
+      "Data Science":     ["data scientist", "analytics", "pandas", "statistics", "visualization", "kaggle"],
+      Blockchain:         ["blockchain", "solidity", "web3", "ethereum", "smart contract", "defi"],
+      "Full Stack":       ["full stack", "fullstack", "mern", "mean", "end to end"],
+      General:            ["software", "developer", "engineer", "sde", "programmer"],
     }[analysis.job_domain] ?? ["software"];
 
     setJobsLoading(true);
