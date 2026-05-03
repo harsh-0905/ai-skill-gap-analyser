@@ -15,14 +15,13 @@ export async function analyzeResume(resumeFile, jdFile) {
 }
 
 export async function sendLearningPlan(email, analysis, profile) {
-  const res = await apiClient.post("/send-plan", {
-    email,
-    name:     profile?.name ?? "",
-    role:     profile?.role ?? "",
-    analysis,
-  });
+  const res = await apiClient.post(
+    "/send-plan",
+    { email, name: profile?.name ?? "", role: profile?.role ?? "", analysis },
+    { timeout: 90000 } // override to 90s for this call only
+  );
   return res.data;
-}
+}  
 
 // ─── Adzuna Jobs API (proxied through FastAPI backend) ────────────────────────
 // Keys live in backend .env only — never exposed to the browser.
