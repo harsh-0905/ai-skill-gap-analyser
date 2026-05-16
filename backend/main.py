@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import json
-import asyncio
 import httpx
 
 from dotenv import load_dotenv
@@ -41,12 +40,13 @@ with open(os.path.join(BASE_DIR, "all_skills.json")) as f:
 with open(os.path.join(BASE_DIR, "courses.json")) as f:
     COURSE_DB = json.load(f)
 
-SMTP_EMAIL    = os.getenv("SMTP_EMAIL", "") or os.getenv("SMTP_USER", "")       # your Gmail address
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")    # Gmail App Password (16 chars)
-SMTP_NAME     = os.getenv("SMTP_NAME", "SkillGap AI")
-FRONTEND_URL   = os.getenv("FRONTEND_URL", "http://localhost:5173")
-ADZUNA_APP_ID  = os.getenv("ADZUNA_APP_ID", "")
-ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
+# ── Resend config ──────────────────────────────────────────────────────────────
+RESEND_API_KEY  = os.getenv("RESEND_API_KEY", "")          # re_xxxxxxxxxxxxxxxx
+FROM_EMAIL      = os.getenv("FROM_EMAIL", "onboarding@resend.dev")  # or your verified domain
+FROM_NAME       = os.getenv("FROM_NAME", "SkillGap AI")
+FRONTEND_URL    = os.getenv("FRONTEND_URL", "http://localhost:5173")
+ADZUNA_APP_ID   = os.getenv("ADZUNA_APP_ID", "")
+ADZUNA_APP_KEY  = os.getenv("ADZUNA_APP_KEY", "")
 
 
 # ─────────────────────────────────────────────
@@ -146,11 +146,6 @@ FULLSTACK_SIGNALS = [
 
 
 def detect_domain(jd_skills: list[str]) -> str:
-    """
-    Score each domain based on signal matches in JD skills.
-    QA and specialised domains use weight=3 to avoid bleed from
-    shared skills like python/postman/java.
-    """
     jd_lower = [s.lower() for s in jd_skills]
 
     scores = {
@@ -183,11 +178,16 @@ def detect_domain(jd_skills: list[str]) -> str:
         if skill in FULLSTACK_SIGNALS:        scores["Full Stack"]       += 3
 
     best_domain = max(scores, key=scores.get)
+    return "General" if scores[best_domain] == 0 else best_domain
 
-    if scores[best_domain] == 0:
-        return "General"
 
-    return best_domain
+# ─────────────────────────────────────────────
+# Keep-alive ping (prevents Render cold starts)
+# ─────────────────────────────────────────────
+
+@app.get("/ping")
+async def ping():
+    return {"status": "ok"}
 
 
 # ─────────────────────────────────────────────
@@ -270,7 +270,7 @@ async def analyze_resume(resume: UploadFile = File(...), jd: UploadFile = File(.
 
 
 # ─────────────────────────────────────────────
-# Email
+# Email via Resend
 # ─────────────────────────────────────────────
 
 class SendPlanRequest(BaseModel):
@@ -282,50 +282,38 @@ class SendPlanRequest(BaseModel):
 
 @app.post("/send-plan")
 async def send_plan(body: SendPlanRequest):
-    if not SMTP_EMAIL or not SMTP_PASSWORD:
+    if not RESEND_API_KEY:
         raise HTTPException(
             status_code=500,
-            detail="Email not configured. Add SMTP_EMAIL and SMTP_PASSWORD to Render environment variables."
+            detail="RESEND_API_KEY not configured. Add it to your Render environment variables."
         )
 
+    html = _build_email_html(body.name, body.role, body.analysis)
+    subject = f"Your Skill Gap Report — {body.analysis.get('job_domain', 'Career')} Role"
+
+    payload = {
+        "from": f"{FROM_NAME} <{FROM_EMAIL}>",
+        "to":   [body.email],
+        "subject": subject,
+        "html": html,
+    }
+
     try:
-        html = _build_email_html(body.name, body.role, body.analysis)
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type":  "application/json",
+                },
+                json=payload,
+            )
 
-        subject = f"Your Skill Gap Report — {body.analysis.get('job_domain', 'Career')} Role"
-
-        # Build MIME message
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
-        import smtplib
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"]    = f"{SMTP_NAME} <{SMTP_EMAIL}>"
-        msg["To"]      = body.email
-        msg["Reply-To"]= SMTP_EMAIL
-
-        # Fallback plain text
-        plain = f"""Hi {body.name or "there"},
-
-Your Skill Gap Report is ready.
-
-Domain     : {body.analysis.get("job_domain", "—")}
-Match Score: {body.analysis.get("match_percentage", 0)}%
-Readiness  : {body.analysis.get("job_readiness", "—")}
-Time to Ready: {body.analysis.get("estimated_time_to_job_ready", "—")}
-
-Missing Skills: {", ".join(body.analysis.get("missing_skills", []))}
-
-Open your dashboard for full details.
-
-— SkillGap AI
-"""
-        msg.attach(MIMEText(plain, "plain"))
-        msg.attach(MIMEText(html,  "html"))
-
-        # Send via Gmail SMTP over TLS (port 587)
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, _send_smtp, msg, body.email)
+        if resp.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=resp.status_code,
+                detail=f"Resend error: {resp.text}"
+            )
 
         return {"status": "sent", "to": body.email}
 
@@ -335,15 +323,9 @@ Open your dashboard for full details.
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _send_smtp(msg, to_email: str):
-    """Blocking SMTP call — runs in thread executor to avoid blocking event loop."""
-    import smtplib
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.ehlo()
-        server.starttls()
-        server.login(SMTP_EMAIL, SMTP_PASSWORD)
-        server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
-
+# ─────────────────────────────────────────────
+# Email HTML builder (unchanged)
+# ─────────────────────────────────────────────
 
 def _build_email_html(name: str, role: str, analysis: dict) -> str:
     matched       = analysis.get("matched_skills", [])
